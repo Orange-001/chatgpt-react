@@ -1,0 +1,5 @@
+/node_modules/**
+**/*.svg
+pnpm-lock.yaml
+auto-imports.d.ts
+visualizer.html
