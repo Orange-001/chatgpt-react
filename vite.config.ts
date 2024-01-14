@@ -6,7 +6,7 @@ import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { defineConfig, loadEnv } from 'vite'
 import { compression } from 'vite-plugin-compression2'
-
+import svgr from 'vite-plugin-svgr'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const isBuild = mode === 'production'
@@ -18,11 +18,11 @@ export default defineConfig(({ mode }) => {
       UnoCSS(),
       AutoImport({
         include: [/\.[tj]sx?$/],
-        imports: ['react', 'react-router', 'react-router-dom']
+        imports: ['react', 'react-router-dom']
       }),
-      (isBuild || isVisualizer) && compression(),
+      svgr(),
 
-      // put it the last one
+      (isBuild || isVisualizer) && compression(),
       isVisualizer &&
         visualizer({
           open: true,

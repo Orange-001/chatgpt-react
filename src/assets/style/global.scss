@@ -1,0 +1,28 @@
+:root,
+body,
+#root {
+  height: 100%;
+}
+
+button {
+  padding: unset;
+  border: unset;
+  background: unset;
+}
+
+::-webkit-scrollbar {
+  height: 1rem;
+  width: 0.5rem;
+  &-thumb {
+    border-radius: 9999px;
+    border-width: 1px;
+    background-color: hsla(0, 0%, 100%, 0.1);
+    &:hover {
+      background-color: hsla(0, 0%, 100%, 0.3);
+    }
+  }
+  &-track {
+    background-color: transparent;
+    border-radius: 9999px;
+  }
+}
