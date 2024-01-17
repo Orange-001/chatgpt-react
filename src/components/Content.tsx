@@ -1,8 +1,10 @@
 import { fetchEventSource } from '@fortaine/fetch-event-source'
-import { Input, message } from 'antd'
+import { App, Input } from 'antd'
 import classNames from 'classnames'
+import { shallowEqual } from 'react-redux'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
+import { useAppDispatch, useAppSelector } from '@/store'
 
 enum Role {
   SYSTEM = 'system',
@@ -42,8 +44,18 @@ function Empty() {
 }
 
 export function Content() {
+  const { currentSessionIndex, sessions } = useAppSelector(
+    state => ({
+      currentSessionIndex: state.chat.currentSessionIndex,
+      sessions: state.chat.sessions
+    }),
+    shallowEqual
+  )
+  const dispatch = useAppDispatch()
+
   const [input, setInput] = useState('')
   const [done, setDone] = useState(true)
+
   function onInput(val: string) {
     setInput(val)
   }
@@ -52,6 +64,7 @@ export function Content() {
   const { VITE_OPENAI_URL, VITE_OPENAI_KEY, VITE_MAX_SEND_MES_COUNT } =
     import.meta.env
   const fetchUrl = `${VITE_OPENAI_URL}/v1/chat/completions`
+  const { message } = App.useApp()
 
   function handleSend() {
     if (input) {
