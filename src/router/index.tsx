@@ -7,7 +7,7 @@ import Layout from '@/layout/Layout'
 import ErrorPage from '@/views/ErrorPage'
 import NotFound from '@/views/ErrorPage/404'
 
-import { guard } from './loader/guard'
+import guard from './loader/guard'
 
 const NewChat = lazy(() => import('@/views/NewChat'))
 const Chat = lazy(() => import('@/views/Chat'))
@@ -20,7 +20,7 @@ export const routes: RouteObject[] = [
     loader: guard,
     children: [
       {
-        path: '/new-chat',
+        index: true,
         element: <NewChat />
       },
       {

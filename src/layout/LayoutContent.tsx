@@ -7,11 +7,11 @@ function LayoutContent() {
   return (
     <Suspense>
       <Routes>
-        <Route path="/" element={<NewChat />} />
-        <Route path="/new-chat" element={<NewChat />} />
-        <Route path="/chat" element={<Chat />} />
+        <Route path="/">
+          <Route index element={<NewChat />} />
+          <Route path="/chat" element={<Chat />} />
+        </Route>
       </Routes>
-      {/* <div>{useRoutes(routes)}</div> */}
     </Suspense>
   )
 }
