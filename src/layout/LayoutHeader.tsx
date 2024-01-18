@@ -1,6 +1,6 @@
 import { Select } from 'antd'
 
-export function Header() {
+function LayoutHeader() {
   return (
     <div className="mb-1.5 box-border h-14 flex items-center justify-between p-2 font-semibold">
       <div>
@@ -24,3 +24,5 @@ export function Header() {
     </div>
   )
 }
+
+export default LayoutHeader

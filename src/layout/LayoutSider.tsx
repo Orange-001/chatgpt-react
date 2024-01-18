@@ -141,7 +141,7 @@ function SessionList() {
   )
 }
 
-export function SiderBar() {
+function LayoutSider() {
   return (
     <div className="w-260px bg-black">
       <nav className="box-border h-full overflow-auto px-3 pb-3.5">
@@ -151,3 +151,4 @@ export function SiderBar() {
     </div>
   )
 }
+export default LayoutSider

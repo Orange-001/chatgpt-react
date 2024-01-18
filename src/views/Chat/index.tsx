@@ -43,7 +43,7 @@ function Empty() {
   )
 }
 
-export function Content() {
+function Chat() {
   const { currentSessionIndex, sessions } = useAppSelector(
     state => ({
       currentSessionIndex: state.chat.currentSessionIndex,
@@ -206,3 +206,5 @@ export function Content() {
     </div>
   )
 }
+
+export default Chat
