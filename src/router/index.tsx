@@ -7,7 +7,7 @@ import Layout from '@/layout/Layout'
 import ErrorPage from '@/views/ErrorPage'
 import NotFound from '@/views/ErrorPage/404'
 
-import guard from './loader/guard'
+import rootLoader from './loader/rootLoader'
 
 const NewChat = lazy(() => import('@/views/NewChat'))
 const Chat = lazy(() => import('@/views/Chat'))
@@ -17,7 +17,7 @@ export const router: RouteObject[] = [
     path: '/',
     element: <Layout />,
     errorElement: <ErrorPage />,
-    loader: guard,
+    loader: rootLoader,
     children: [
       {
         index: true,
