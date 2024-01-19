@@ -1,12 +1,15 @@
 import { Tooltip } from 'antd'
 import classNames from 'classnames'
+import { useShallow } from 'zustand/react/shallow'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
+import useChatStore from '@/store/chat'
 
 function NewChat() {
   const NewChatBtnRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
   function handleNewChat() {
-    console.log('handleNewChat')
+    navigate('/')
   }
 
   return (
@@ -26,6 +29,7 @@ function NewChat() {
 }
 
 function SessionList() {
+  const navigate = useNavigate()
   const [sessionList, setSessionList] = useState([
     {
       title: 'Today',
@@ -64,9 +68,18 @@ function SessionList() {
     }
   ])
   const [active, setActive] = useState('0')
+  // const { currentSessionIndex, sessions, setCurrent } = useChatStore(
+  //   useShallow(state => ({
+  //     currentSessionIndex: state.currentSessionIndex,
+  //     sessions: state.sessions,
+  //     setCurrent: state.setCurrent
+  //   }))
+  // )
 
   function handleSelectSession(id: string) {
     setActive(id)
+    // setCurrent(0)
+    navigate('/chat')
   }
   function handleRename() {
     console.log('handleRename')

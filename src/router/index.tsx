@@ -12,7 +12,7 @@ import guard from './loader/guard'
 const NewChat = lazy(() => import('@/views/NewChat'))
 const Chat = lazy(() => import('@/views/Chat'))
 
-export const routes: RouteObject[] = [
+export const router: RouteObject[] = [
   {
     path: '/',
     element: <Layout />,
@@ -35,6 +35,6 @@ export const routes: RouteObject[] = [
   }
 ]
 
-const router = createBrowserRouter(routes)
+const browserRouter = createBrowserRouter(router)
 
-export default router
+export default browserRouter

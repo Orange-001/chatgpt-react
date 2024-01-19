@@ -2,10 +2,12 @@ import { fetchEventSource } from '@fortaine/fetch-event-source'
 import { App, Input } from 'antd'
 import classNames from 'classnames'
 import { shallowEqual } from 'react-redux'
+import { useMatches } from 'react-router-dom'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
-import { useAppDispatch, useAppSelector } from '@/store'
+import { useAppDispatch, useAppSelector } from '@/redux-store'
 
+// #region type
 enum Role {
   SYSTEM = 'system',
   USER = 'user',
@@ -15,7 +17,9 @@ interface Message {
   role: Role
   content: string
 }
+// #endregion
 
+// #region Icon & Empty
 function IconUserAvatar() {
   return (
     <div className="h-24px w-24px flex items-center justify-center rd-50% bg-#2dc2d8">
@@ -42,6 +46,7 @@ function Empty() {
     </div>
   )
 }
+// #endregion
 
 function Chat() {
   const { currentSessionIndex, sessions } = useAppSelector(
