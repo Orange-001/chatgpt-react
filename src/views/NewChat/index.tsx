@@ -38,11 +38,11 @@ function Empty() {
 // #endregion
 
 function Chat() {
-  const { currentSessionId, sessions, newSession } = useChatStore(
+  const { currentSessionId, sessions, userSendMessage } = useChatStore(
     useShallow(state => ({
       currentSessionId: state.currentSessionId,
       sessions: state.sessions,
-      newSession: state.newSession
+      userSendMessage: state.userSendMessage
     }))
   )
 
@@ -61,14 +61,19 @@ function Chat() {
 
   function handleSend() {
     if (input) {
+      userSendMessage(input)
+    } else {
+      message.warning('Please Input your message!')
+    }
+    return
+
+    if (input) {
       const controller = new AbortController()
       const userMsg: Message = {
         role: Role.USER,
         content: input
       }
       const historyTemp = [...history, userMsg]
-      newSession(historyTemp)
-      return
       setHistory(historyTemp)
       const data = {
         model: 'gpt-3.5-turbo',

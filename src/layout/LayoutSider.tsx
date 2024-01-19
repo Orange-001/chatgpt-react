@@ -1,9 +1,14 @@
 import { Tooltip } from 'antd'
 import classNames from 'classnames'
-import { useShallow } from 'zustand/react/shallow'
+import dayjs from 'dayjs'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
-import useChatStore from '@/store/chat'
+import useChatStore, { Session } from '@/store/chat'
+
+interface SessionGroup {
+  title: string
+  sessions: Session[]
+}
 
 function NewChat() {
   const NewChatBtnRef = useRef<HTMLDivElement>(null)
@@ -29,125 +34,126 @@ function NewChat() {
 }
 
 function SessionList() {
-  const navigate = useNavigate()
-  const [sessionList, setSessionList] = useState([
-    {
-      title: 'Today',
-      child: [
-        {
-          title: 'SVG白色背景',
-          id: '0'
-        }
-      ]
-    },
-    {
-      title: 'Yesterday',
-      child: [
-        {
-          title: '使用SCSS变量在UnoCSS',
-          id: '1'
-        }
-      ]
-    },
-    {
-      title: 'Previous 7 Days',
-      child: [
-        {
-          title: 'SWC: Solidity Security Standards',
-          id: '2'
-        },
-        {
-          title: 'WebChatGPT',
-          id: '3'
-        },
-        {
-          title: 'Vue2响应式漏洞解释Vue2响应式漏洞解释Vue2响应式漏洞解释',
-          id: '4'
-        }
-      ]
-    }
-  ])
-  const [active, setActive] = useState('0')
-  // const { currentSessionIndex, sessions, setCurrent } = useChatStore(
-  //   useShallow(state => ({
-  //     currentSessionIndex: state.currentSessionIndex,
-  //     sessions: state.sessions,
-  //     setCurrent: state.setCurrent
-  //   }))
-  // )
+  const {
+    currentSessionId,
+    sessions,
+    setCurrentSessionId,
+    delSessionById,
+    resetCurrentSessionId
+  } = useChatStore(state => ({
+    currentSessionId: state.currentSessionId,
+    sessions: state.sessions,
+    setCurrentSessionId: state.setCurrentSessionId,
+    delSessionById: state.delSessionById,
+    resetCurrentSessionId: state.resetCurrentSessionId
+  }))
+  const [sessionGroups, setSessionGroups] = useState<SessionGroup[]>([])
+
+  useEffect(() => {
+    const temp: SessionGroup[] = [
+      { title: 'Today', sessions: [] },
+      { title: 'Yesterday', sessions: [] },
+      { title: 'Previous 7 Days', sessions: [] },
+      { title: 'Previous 30 Days', sessions: [] }
+    ]
+    sessions.map(v => {
+      const targetDate = dayjs(v.createTime)
+      // 判断是否是今天
+      const isToday = dayjs().isSame(targetDate, 'day')
+      // 判断是否是昨天
+      const isYesterday = dayjs().subtract(1, 'day').isSame(targetDate, 'day')
+      // 判断是否是7天前
+      const is7DaysAgo = dayjs().subtract(7, 'day').isAfter(targetDate)
+      // 判断是否是30天前
+      const is30DaysAgo = dayjs().subtract(30, 'day').isAfter(targetDate)
+
+      if (isToday) {
+        temp[0].sessions.push(v)
+      } else if (isYesterday) {
+        temp[1].sessions.push(v)
+      } else if (is7DaysAgo) {
+        temp[2].sessions.push(v)
+      } else if (is30DaysAgo) {
+        temp[3].sessions.push(v)
+      }
+    })
+    setSessionGroups(temp)
+  }, [sessions])
 
   function handleSelectSession(id: string) {
-    setActive(id)
-    // setCurrent(0)
-    navigate('/chat')
+    setCurrentSessionId(id)
   }
+
   function handleRename() {
     console.log('handleRename')
   }
-  function handleDel() {
-    console.log('handleDel')
+
+  function handleDel(id: string) {
+    delSessionById(id)
   }
 
   return (
     <div>
-      {sessionList.map((item, index) => {
+      {sessionGroups.map((item, index) => {
         return (
-          <div key={index} className="mt-5">
-            <h3 className="h-9 bg-black px-2 pb-2 pt-3 text-xs c-[rgba(102,102,102)] font-medium">
-              {item.title}
-            </h3>
-            <ol>
-              {item.child.map(cItem => {
-                return (
-                  <li
-                    key={cItem.id}
-                    className={classNames(
-                      'group relative cursor-pointer rounded-lg p-2 text-sm hover:bg-#202123 active:opacity-90',
-                      active === cItem.id ? 'bg-#343541!' : ''
-                    )}
-                    onClick={() => handleSelectSession(cItem.id)}
-                  >
-                    <div className="overflow-hidden whitespace-nowrap">
-                      {cItem.title}
-                    </div>
-                    <div
+          !!item.sessions.length && (
+            <div key={index} className="mt-5">
+              <h3 className="h-9 bg-black px-2 pb-2 pt-3 text-xs c-[rgba(102,102,102)] font-medium">
+                {item.title}
+              </h3>
+              <ol>
+                {item.sessions.map(cItem => {
+                  return (
+                    <li
+                      key={cItem.id}
                       className={classNames(
-                        'w-20 absolute bottom-0 right-0 top-0 hidden justify-end items-center gap-1.5 pr-2 group-hover:flex rounded-lg',
-                        active === cItem.id ? 'flex' : ''
+                        'group relative cursor-pointer rounded-lg p-2 text-sm hover:bg-#202123 active:opacity-90',
+                        currentSessionId === cItem.id ? 'bg-#343541!' : ''
                       )}
-                      style={{
-                        backgroundImage:
-                          active === cItem.id
-                            ? 'linear-gradient(to left, #343541 60%, rgba(255, 255, 255, 0))'
-                            : 'linear-gradient(to left, #202123 60%, rgba(0, 0, 0, 0))'
-                      }}
+                      onClick={() => handleSelectSession(cItem.id)}
                     >
-                      <Tooltip placement="top" title="rename" color="#333333">
-                        <button
-                          onClick={e => {
-                            e.stopPropagation()
-                            handleRename()
-                          }}
-                        >
-                          <i className="i-material-symbols:edit c-white hover:opacity-70"></i>
-                        </button>
-                      </Tooltip>
-                      <Tooltip placement="top" title="delete" color="#333333">
-                        <button
-                          onClick={e => {
-                            e.stopPropagation()
-                            handleDel()
-                          }}
-                        >
-                          <i className="i-material-symbols:delete c-white hover:opacity-70"></i>
-                        </button>
-                      </Tooltip>
-                    </div>
-                  </li>
-                )
-              })}
-            </ol>
-          </div>
+                      <div className="overflow-hidden whitespace-nowrap">
+                        {cItem.topic}
+                      </div>
+                      <div
+                        className={classNames(
+                          'w-20 absolute bottom-0 right-0 top-0 hidden justify-end items-center gap-1.5 pr-2 group-hover:flex rounded-lg',
+                          currentSessionId === cItem.id ? 'flex' : ''
+                        )}
+                        style={{
+                          backgroundImage:
+                            currentSessionId === cItem.id
+                              ? 'linear-gradient(to left, #343541 60%, rgba(255, 255, 255, 0))'
+                              : 'linear-gradient(to left, #202123 60%, rgba(0, 0, 0, 0))'
+                        }}
+                      >
+                        <Tooltip placement="top" title="rename" color="#333333">
+                          <button
+                            onClick={e => {
+                              e.stopPropagation()
+                              handleRename()
+                            }}
+                          >
+                            <i className="i-material-symbols:edit c-white hover:opacity-70"></i>
+                          </button>
+                        </Tooltip>
+                        <Tooltip placement="top" title="delete" color="#333333">
+                          <button
+                            onClick={e => {
+                              e.stopPropagation()
+                              handleDel(cItem.id)
+                            }}
+                          >
+                            <i className="i-material-symbols:delete c-white hover:opacity-70"></i>
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ol>
+            </div>
+          )
         )
       })}
     </div>

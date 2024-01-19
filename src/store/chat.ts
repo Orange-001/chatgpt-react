@@ -25,12 +25,17 @@ export interface Session {
 interface Chat {
   currentSessionId: string
   sessions: Session[]
-  setCurrentSessionById: (id: string) => void
+  setCurrentSessionId: (id: string) => void
   summarizeSession: (messages: Message[]) => void
-  isNeedNew: () => boolean
-  newSession: (messages: Message[]) => void
   updateSession: (id: string, session: Partial<Session>) => void
   getSessionById: (id: string) => Session | undefined
+  userSendMessage: (content: string) => void
+  getCurrentSession: () => Session | undefined
+  delSessionById: (id: string) => void
+  getSessionIndexById: (id: string) => number
+  getCurrentSessionIndex: (id: string) => number
+  clearCurrentSessionId: () => void
+  resetCurrentSessionId: () => void
 }
 
 const useChatStore = create<Chat>()(
@@ -38,36 +43,77 @@ const useChatStore = create<Chat>()(
     immer(
       devtools((set, get, api): Chat => {
         return {
-          currentSessionId: '0',
+          currentSessionId: '',
           sessions: [],
+
+          getSessionIndexById(id) {
+            const index = get().sessions.findIndex(v => v.id === id)
+            return index
+          },
+
+          getCurrentSessionIndex() {
+            const index = get().getSessionIndexById(get().currentSessionId)
+            return index
+          },
 
           getSessionById(id) {
             const item = get().sessions.find(v => v.id === id)
             return item
           },
 
-          setCurrentSessionById(index) {
+          getCurrentSession() {
+            const item = get().sessions.find(
+              v => v.id === get().currentSessionId
+            )
+            return item
+          },
+
+          setCurrentSessionId(index) {
             set(state => {
               state.currentSessionId = index
             })
           },
 
-          isNeedNew() {
-            const { sessions } = get()
-            const session = sessions.find(v => v.id === this.currentSessionId)
-            return !!session
+          userSendMessage(content: string) {
+            set(state => {
+              const hasCurrent = state.getCurrentSession()
+              if (hasCurrent) {
+                console.log('hasCurrent')
+              } else {
+                const item: Session = {
+                  id: nanoid(),
+                  createTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                  topic: 'New Chat',
+                  messages: [
+                    {
+                      role: Role.USER,
+                      content
+                    }
+                  ]
+                }
+                state.sessions.unshift(item)
+                state.currentSessionId = state.sessions[0].id
+              }
+            })
           },
 
-          newSession(messages) {
+          delSessionById(id: string) {
             set(state => {
-              state.summarizeSession(messages)
-              // const session = {
-              //   id: nanoid(),
-              //   topic: '',
-              //   createTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-              //   messages
-              // }
-              // state.sessions.unshift()
+              const index = state.getCurrentSessionIndex(id)
+              state.sessions.splice(index, 1)
+            })
+          },
+
+          clearCurrentSessionId() {
+            set(state => {
+              state.currentSessionId = ''
+            })
+          },
+
+          resetCurrentSessionId() {
+            set(state => {
+              const id = state.sessions[0]?.id
+              id ? (state.currentSessionId = id) : state.clearCurrentSessionId()
             })
           },
 
