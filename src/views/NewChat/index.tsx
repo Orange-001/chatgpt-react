@@ -38,13 +38,16 @@ function Empty() {
 // #endregion
 
 function Chat() {
-  const { currentSessionId, sessions, userSendMessage } = useChatStore(
-    useShallow(state => ({
-      currentSessionId: state.currentSessionId,
-      sessions: state.sessions,
-      userSendMessage: state.userSendMessage
-    }))
-  )
+  const { currentSessionId, sessions, userSendMessage, getCurrentSession } =
+    useChatStore(
+      useShallow(state => ({
+        currentSessionId: state.currentSessionId,
+        sessions: state.sessions,
+        userSendMessage: state.userSendMessage,
+        getCurrentSession: state.getCurrentSession
+      }))
+    )
+  const currentSession = getCurrentSession()
 
   const [input, setInput] = useState('')
   const [done, setDone] = useState(true)
@@ -138,10 +141,8 @@ function Chat() {
   return (
     <div className="m-auto h-0 max-w-1200px flex flex-1 flex-col px-16px">
       <div className="flex-1 overflow-auto">
-        {/* <IconUserAvatar /> */}
-        {/* <IconChatGPTAvatar /> */}
-        {history.length === 0 && <Empty />}
-        {history.map((item, index) => {
+        {!currentSession && <Empty />}
+        {currentSession?.messages.map((item, index) => {
           const isUser = item.role === Role.USER
           return (
             <div

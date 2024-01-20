@@ -12,9 +12,12 @@ interface SessionGroup {
 
 function NewChat() {
   const NewChatBtnRef = useRef<HTMLDivElement>(null)
-  const navigate = useNavigate()
+  const { setCurrentSessionId } = useChatStore(state => ({
+    setCurrentSessionId: state.setCurrentSessionId
+  }))
+
   function handleNewChat() {
-    navigate('/')
+    setCurrentSessionId('')
   }
 
   return (
@@ -34,19 +37,13 @@ function NewChat() {
 }
 
 function SessionList() {
-  const {
-    currentSessionId,
-    sessions,
-    setCurrentSessionId,
-    delSessionById,
-    resetCurrentSessionId
-  } = useChatStore(state => ({
-    currentSessionId: state.currentSessionId,
-    sessions: state.sessions,
-    setCurrentSessionId: state.setCurrentSessionId,
-    delSessionById: state.delSessionById,
-    resetCurrentSessionId: state.resetCurrentSessionId
-  }))
+  const { currentSessionId, sessions, setCurrentSessionId, delSessionById } =
+    useChatStore(state => ({
+      currentSessionId: state.currentSessionId,
+      sessions: state.sessions,
+      setCurrentSessionId: state.setCurrentSessionId,
+      delSessionById: state.delSessionById
+    }))
   const [sessionGroups, setSessionGroups] = useState<SessionGroup[]>([])
 
   useEffect(() => {

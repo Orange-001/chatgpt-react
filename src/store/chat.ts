@@ -34,8 +34,6 @@ interface Chat {
   delSessionById: (id: string) => void
   getSessionIndexById: (id: string) => number
   getCurrentSessionIndex: (id: string) => number
-  clearCurrentSessionId: () => void
-  resetCurrentSessionId: () => void
 }
 
 const useChatStore = create<Chat>()(
@@ -76,9 +74,16 @@ const useChatStore = create<Chat>()(
 
           userSendMessage(content: string) {
             set(state => {
-              const hasCurrent = state.getCurrentSession()
-              if (hasCurrent) {
-                console.log('hasCurrent')
+              const currentSession = state.getCurrentSession()
+              if (currentSession) {
+                state.sessions.forEach(v => {
+                  if (v.id === state.currentSessionId) {
+                    v.messages.push({
+                      role: Role.USER,
+                      content
+                    })
+                  }
+                })
               } else {
                 const item: Session = {
                   id: nanoid(),
@@ -101,19 +106,11 @@ const useChatStore = create<Chat>()(
             set(state => {
               const index = state.getCurrentSessionIndex(id)
               state.sessions.splice(index, 1)
-            })
-          },
-
-          clearCurrentSessionId() {
-            set(state => {
-              state.currentSessionId = ''
-            })
-          },
-
-          resetCurrentSessionId() {
-            set(state => {
-              const id = state.sessions[0]?.id
-              id ? (state.currentSessionId = id) : state.clearCurrentSessionId()
+              if (!state.sessions.length) {
+                state.currentSessionId = ''
+              } else if (id === state.currentSessionId) {
+                state.currentSessionId = state.sessions[0].id
+              }
             })
           },
 
