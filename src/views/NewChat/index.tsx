@@ -1,6 +1,5 @@
 import { App, Input } from 'antd'
 import classNames from 'classnames'
-import { useShallow } from 'zustand/react/shallow'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
 import useChatStore, { Role } from '@/store/chat'
@@ -35,12 +34,10 @@ function Empty() {
 // #endregion
 
 function Chat() {
-  const { userSendMessage, getCurrentSession } = useChatStore(
-    useShallow(state => ({
-      userSendMessage: state.userSendMessage,
-      getCurrentSession: state.getCurrentSession
-    }))
-  )
+  const { userSendMessage, getCurrentSession } = useChatStore(state => ({
+    userSendMessage: state.userSendMessage,
+    getCurrentSession: state.getCurrentSession
+  }))
   const currentSession = getCurrentSession()
 
   const [input, setInput] = useState('')
