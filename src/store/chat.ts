@@ -1,3 +1,4 @@
+import { fetchEventSource } from '@fortaine/fetch-event-source'
 import { nanoid } from '@reduxjs/toolkit'
 import dayjs from 'dayjs'
 import { create } from 'zustand'
@@ -33,7 +34,8 @@ interface Chat {
   getCurrentSession: () => Session | undefined
   delSessionById: (id: string) => void
   getSessionIndexById: (id: string) => number
-  getCurrentSessionIndex: (id: string) => number
+  getCurrentSessionIndex: () => number
+  fetchAnswer: () => void
 }
 
 const useChatStore = create<Chat>()(
@@ -72,10 +74,9 @@ const useChatStore = create<Chat>()(
             })
           },
 
-          userSendMessage(content: string) {
-            set(state => {
-              const currentSession = state.getCurrentSession()
-              if (currentSession) {
+          async userSendMessage(content: string) {
+            if (get().getCurrentSession()) {
+              set(state => {
                 state.sessions.forEach(v => {
                   if (v.id === state.currentSessionId) {
                     v.messages.push({
@@ -84,8 +85,10 @@ const useChatStore = create<Chat>()(
                     })
                   }
                 })
-              } else {
-                const item: Session = {
+              })
+            } else {
+              set(state => {
+                state.sessions.unshift({
                   id: nanoid(),
                   createTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                   topic: 'New Chat',
@@ -95,16 +98,72 @@ const useChatStore = create<Chat>()(
                       content
                     }
                   ]
+                })
+              })
+              set(state => {
+                state.currentSessionId = get().sessions[0].id
+              })
+            }
+            get().fetchAnswer()
+          },
+
+          fetchAnswer() {
+            const currentSession = get().getCurrentSession()
+            if (!currentSession) return
+
+            const controller = new AbortController()
+            const { VITE_OPENAI_URL, VITE_OPENAI_KEY } = import.meta.env
+            const fetchUrl = `${VITE_OPENAI_URL}/v1/chat/completions`
+
+            fetchEventSource(fetchUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-requested-with': 'XMLHttpRequest',
+                Authorization: `Bearer ${VITE_OPENAI_KEY}`
+              },
+              body: JSON.stringify({
+                model: 'gpt-3.5-turbo',
+                messages: currentSession.messages,
+                stream: true
+              }),
+              signal: controller.signal,
+              onmessage(msg) {
+                if (msg.data === '[DONE]') {
+                  return
                 }
-                state.sessions.unshift(item)
-                state.currentSessionId = state.sessions[0].id
+                const data = JSON.parse(msg.data)
+                const delta = data.choices[0]?.delta?.content
+                if (delta) {
+                  const current = get().getCurrentSession()
+                  const currentSessionIndex = get().getCurrentSessionIndex()
+                  if (current && current.id === currentSession.id) {
+                    const index =
+                      current.messages.at(-1)?.role === Role.ASSISTANT
+                        ? current.messages.length - 1
+                        : current.messages.length
+                    set(state => {
+                      state.sessions[currentSessionIndex].messages[index] = {
+                        role: Role.ASSISTANT,
+                        content:
+                          (get().getCurrentSession()?.messages[index]
+                            ?.content ?? '') + delta
+                      }
+                    })
+                  }
+                }
+              },
+              onerror(err) {
+                console.log(err)
+                // no retry
+                throw err
               }
             })
           },
 
           delSessionById(id: string) {
             set(state => {
-              const index = state.getCurrentSessionIndex(id)
+              const index = state.getSessionIndexById(id)
               state.sessions.splice(index, 1)
               if (!state.sessions.length) {
                 state.currentSessionId = ''

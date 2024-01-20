@@ -1,11 +1,8 @@
-import { fetchEventSource } from '@fortaine/fetch-event-source'
 import { App, Input } from 'antd'
 import classNames from 'classnames'
-import dayjs from 'dayjs'
 import { useShallow } from 'zustand/react/shallow'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
-import type { Message } from '@/store/chat'
 import useChatStore, { Role } from '@/store/chat'
 
 // #region Icon & Empty
@@ -38,100 +35,27 @@ function Empty() {
 // #endregion
 
 function Chat() {
-  const { currentSessionId, sessions, userSendMessage, getCurrentSession } =
-    useChatStore(
-      useShallow(state => ({
-        currentSessionId: state.currentSessionId,
-        sessions: state.sessions,
-        userSendMessage: state.userSendMessage,
-        getCurrentSession: state.getCurrentSession
-      }))
-    )
+  const { userSendMessage, getCurrentSession } = useChatStore(
+    useShallow(state => ({
+      userSendMessage: state.userSendMessage,
+      getCurrentSession: state.getCurrentSession
+    }))
+  )
   const currentSession = getCurrentSession()
 
   const [input, setInput] = useState('')
-  const [done, setDone] = useState(true)
+  const [isFetching, setIsFetching] = useState(false)
 
   function onInput(val: string) {
     setInput(val)
   }
 
-  const [history, setHistory] = useState<Message[]>([])
-  const { VITE_OPENAI_URL, VITE_OPENAI_KEY, VITE_MAX_SEND_MES_COUNT } =
-    import.meta.env
-  const fetchUrl = `${VITE_OPENAI_URL}/v1/chat/completions`
   const { message } = App.useApp()
 
   function handleSend() {
     if (input) {
       userSendMessage(input)
     } else {
-      message.warning('Please Input your message!')
-    }
-    return
-
-    if (input) {
-      const controller = new AbortController()
-      const userMsg: Message = {
-        role: Role.USER,
-        content: input
-      }
-      const historyTemp = [...history, userMsg]
-      setHistory(historyTemp)
-      const data = {
-        model: 'gpt-3.5-turbo',
-        messages: historyTemp.slice(-VITE_MAX_SEND_MES_COUNT),
-        stream: true
-      }
-      let remainText = ''
-
-      setDone(false)
-      fetchEventSource(fetchUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-requested-with': 'XMLHttpRequest',
-          Authorization: `Bearer ${VITE_OPENAI_KEY}`
-        },
-        body: JSON.stringify(data),
-        signal: controller.signal,
-        onmessage(msg) {
-          if (msg.data === '[DONE]') {
-            setDone(true)
-            return
-          }
-          const text = msg.data
-          try {
-            const json = JSON.parse(text) as {
-              choices: Array<{
-                delta: {
-                  content: string
-                }
-              }>
-            }
-            const delta = json.choices[0]?.delta?.content
-            if (delta) {
-              remainText += delta
-              const historyTempCopy: Message[] = JSON.parse(
-                JSON.stringify(historyTemp)
-              )
-              const index =
-                historyTempCopy.at(-1)?.role === Role.ASSISTANT
-                  ? historyTempCopy.length - 1
-                  : historyTempCopy.length
-              historyTempCopy[index] = {
-                role: Role.ASSISTANT,
-                content: remainText
-              }
-              setHistory(historyTempCopy)
-            }
-          } catch (error) {
-            console.log('[Request] parse error', text)
-          }
-        }
-      })
-    } else {
-      setDone(true)
       message.warning('Please Input your message!')
     }
   }
@@ -160,7 +84,7 @@ function Chat() {
                     {isUser && (
                       <i className="i-ic:twotone-edit invisible c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
                     )}
-                    {!isUser && done && (
+                    {!isUser && !isFetching && (
                       <i className="i-mingcute:clipboard-line invisible c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
                     )}
                   </div>
@@ -185,15 +109,15 @@ function Chat() {
             className="absolute right-10px top-50% rounded-lg p-4px active:opacity-80"
             style={{ transform: 'translateY(-50%)' }}
             onClick={() => {
-              done ? handleSend() : handleStop()
+              isFetching ? handleStop() : handleSend()
             }}
           >
             <i
               className={classNames(
                 'c-white active:scale-98',
-                done
-                  ? 'i-ri:send-plane-fill'
-                  : 'i-solar:stop-circle-bold-duotone text-22px'
+                isFetching
+                  ? 'i-solar:stop-circle-bold-duotone text-22px'
+                  : 'i-ri:send-plane-fill'
               )}
             />
           </button>
