@@ -30,7 +30,9 @@ function NewChat() {
         <div className="h-28px w-28px flex items-center justify-center rd-50% bg-white">
           <IconNewChat className="h-18px w-18px c-black" />
         </div>
-        <div className="text-sm">New chat</div>
+        <div className="overflow-hidden whitespace-nowrap text-sm">
+          New chat
+        </div>
       </div>
     </div>
   )
@@ -158,12 +160,31 @@ function SessionList() {
 }
 
 function LayoutSider() {
+  const [collapse, setCollapse] = useState(false)
+  function handleToggleCollapse() {
+    setCollapse(!collapse)
+  }
+
+  const NewChatMemo = memo(NewChat)
+  const SessionListMemo = memo(SessionList)
   return (
-    <div className="w-260px bg-black">
-      <nav className="box-border h-full overflow-auto px-3 pb-3.5">
-        <NewChat />
-        <SessionList />
-      </nav>
+    <div
+      className={classNames(
+        'relative bg-black  box-border transition-all transition-duration-400',
+        collapse ? 'w-0' : 'w-260px'
+      )}
+    >
+      <div className="h-full overflow-hidden">
+        <nav className="box-border h-full overflow-auto px-3 pb-3.5">
+          <NewChatMemo />
+          <SessionListMemo />
+        </nav>
+      </div>
+      <i
+        className="i-clarity:collapse-line absolute right--20px top-50%"
+        style={{ transform: 'translateY(-50%) roate(-90deg)' }}
+        onClick={handleToggleCollapse}
+      ></i>
     </div>
   )
 }

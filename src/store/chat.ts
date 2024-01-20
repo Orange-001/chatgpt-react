@@ -125,7 +125,11 @@ const useChatStore = create<Chat>()(
               body: JSON.stringify({
                 model: 'gpt-3.5-turbo',
                 messages: currentSession.messages,
-                stream: true
+                stream: true,
+                temperature: 0.5,
+                top_p: 1,
+                presence_penalty: 0,
+                frequency_penalty: 0
               }),
               signal: controller.signal,
               onmessage(msg) {

@@ -76,7 +76,14 @@ function Chat() {
                 </div>
                 <div className="flex-1">
                   <div className="font-bold">{isUser ? 'You' : 'ChatGPT'}</div>
-                  <div>{item.content}</div>
+                  <div>
+                    {item.content}
+                    {!isUser &&
+                      index === currentSession.messages.length - 1 &&
+                      isFetching && (
+                        <i className="i-svg-spinners:bars-fade text-20px" />
+                      )}
+                  </div>
                   <div className="">
                     {isUser && (
                       <i className="i-ic:twotone-edit invisible c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
