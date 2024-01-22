@@ -4,6 +4,12 @@ import dayjs from 'dayjs'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
 import useChatStore, { Session } from '@/store/chat'
+import {
+  isToday,
+  isWithin7Days,
+  isWithin30Days,
+  isYesterday
+} from '@/utils/date'
 
 interface SessionGroup {
   title: string
@@ -55,24 +61,16 @@ function SessionList() {
       { title: 'Previous 7 Days', sessions: [] },
       { title: 'Previous 30 Days', sessions: [] }
     ]
-    sessions.map(v => {
+    sessions.forEach(v => {
       const targetDate = dayjs(v.createTime)
-      // 判断是否是今天
-      const isToday = dayjs().isSame(targetDate, 'day')
-      // 判断是否是昨天
-      const isYesterday = dayjs().subtract(1, 'day').isSame(targetDate, 'day')
-      // 判断是否是7天前
-      const is7DaysAgo = dayjs().subtract(7, 'day').isAfter(targetDate)
-      // 判断是否是30天前
-      const is30DaysAgo = dayjs().subtract(30, 'day').isAfter(targetDate)
 
-      if (isToday) {
+      if (isToday(targetDate)) {
         temp[0].sessions.push(v)
-      } else if (isYesterday) {
+      } else if (isYesterday(targetDate)) {
         temp[1].sessions.push(v)
-      } else if (is7DaysAgo) {
+      } else if (isWithin7Days(targetDate)) {
         temp[2].sessions.push(v)
-      } else if (is30DaysAgo) {
+      } else if (isWithin30Days(targetDate)) {
         temp[3].sessions.push(v)
       }
     })
@@ -159,14 +157,39 @@ function SessionList() {
   )
 }
 
+function ToggleCollapseBtn(props: { collapse: boolean; onClick: () => void }) {
+  const { collapse, onClick } = props
+  const [title, setTitle] = useState('Close siderbar')
+  useEffect(() => {
+    setTimeout(() => {
+      setTitle(collapse ? 'Open siderbar' : 'Close siderbar')
+    }, 100)
+  }, [collapse])
+  return (
+    <div
+      className="group absolute right--30px top-50%"
+      style={{ transform: 'translateY(-50%)' }}
+    >
+      <Tooltip placement="right" title={title} mouseLeaveDelay={0}>
+        <button className="cursor-pointer" onClick={onClick}>
+          <div className="h-[72px] w-8 flex items-center justify-center">
+            <div className="h-5.5 w-1 rounded-full bg-#ececf1 opacity-25 transition-colors transition-duration-1000 group-hover:opacity-75"></div>
+          </div>
+        </button>
+      </Tooltip>
+    </div>
+  )
+}
+
 function LayoutSider() {
   const [collapse, setCollapse] = useState(false)
-  function handleToggleCollapse() {
+  const handleToggleCollapse = useCallback(() => {
     setCollapse(!collapse)
-  }
+  }, [collapse])
 
   const NewChatMemo = memo(NewChat)
   const SessionListMemo = memo(SessionList)
+  const ToggleCollapseBtnMemo = memo(ToggleCollapseBtn)
   return (
     <div
       className={classNames(
@@ -180,11 +203,10 @@ function LayoutSider() {
           <SessionListMemo />
         </nav>
       </div>
-      <i
-        className="i-clarity:collapse-line absolute right--20px top-50%"
-        style={{ transform: 'translateY(-50%) roate(-90deg)' }}
+      <ToggleCollapseBtnMemo
+        collapse={collapse}
         onClick={handleToggleCollapse}
-      ></i>
+      />
     </div>
   )
 }
