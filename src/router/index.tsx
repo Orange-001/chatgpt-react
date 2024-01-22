@@ -9,7 +9,6 @@ import NotFound from '@/views/ErrorPage/404'
 
 import rootLoader from './loader/rootLoader'
 
-const NewChat = lazy(() => import('@/views/NewChat'))
 const Chat = lazy(() => import('@/views/Chat'))
 
 export const router: RouteObject[] = [
@@ -21,10 +20,6 @@ export const router: RouteObject[] = [
     children: [
       {
         index: true,
-        element: <NewChat />
-      },
-      {
-        path: '/chat',
         element: <Chat />
       }
     ]

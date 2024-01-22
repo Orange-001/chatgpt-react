@@ -1,5 +1,6 @@
 import { fetchEventSource } from '@fortaine/fetch-event-source'
 import { nanoid } from '@reduxjs/toolkit'
+import { message } from 'antd'
 import dayjs from 'dayjs'
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
@@ -133,32 +134,36 @@ const useChatStore = create<Chat>()(
               }),
               signal: controller.signal,
               onmessage(msg) {
-                if (msg.data === '[DONE]') {
-                  return
-                }
-                const data = JSON.parse(msg.data)
-                const delta = data.choices[0]?.delta?.content
-                if (delta) {
-                  const current = get().getCurrentSession()
-                  const currentSessionIndex = get().getCurrentSessionIndex()
-                  if (current && current.id === currentSession.id) {
-                    const index =
-                      current.messages.at(-1)?.role === Role.ASSISTANT
-                        ? current.messages.length - 1
-                        : current.messages.length
-                    set(state => {
-                      state.sessions[currentSessionIndex].messages[index] = {
-                        role: Role.ASSISTANT,
-                        content:
-                          (get().getCurrentSession()?.messages[index]
-                            ?.content ?? '') + delta
-                      }
-                    })
+                try {
+                  if (msg.data === '[DONE]') {
+                    return
                   }
+                  const data = JSON.parse(msg.data)
+                  const delta = data.choices[0]?.delta?.content
+                  if (delta) {
+                    const current = get().getCurrentSession()
+                    const currentSessionIndex = get().getCurrentSessionIndex()
+                    if (current && current.id === currentSession.id) {
+                      const index =
+                        current.messages.at(-1)?.role === Role.ASSISTANT
+                          ? current.messages.length - 1
+                          : current.messages.length
+                      set(state => {
+                        state.sessions[currentSessionIndex].messages[index] = {
+                          role: Role.ASSISTANT,
+                          content:
+                            (get().getCurrentSession()?.messages[index]
+                              ?.content ?? '') + delta
+                        }
+                      })
+                    }
+                  }
+                } catch (error) {
+                  message.error('Parse error')
                 }
               },
               onerror(err) {
-                console.log(err)
+                message.error(`something wrong ${err}`)
                 // no retry
                 throw err
               }

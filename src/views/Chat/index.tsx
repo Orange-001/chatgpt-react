@@ -1,25 +1,12 @@
-import { fetchEventSource } from '@fortaine/fetch-event-source'
-import { App, Input } from 'antd'
+import { App, Input, Space } from 'antd'
 import classNames from 'classnames'
-import { shallowEqual } from 'react-redux'
-import { useMatches } from 'react-router-dom'
+import copy from 'copy-to-clipboard'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
-import { useAppDispatch, useAppSelector } from '@/redux-store'
+import Markdown from '@/components/Markdown'
+import useChatStore, { Role } from '@/store/chat'
 
-// #region type
-enum Role {
-  SYSTEM = 'system',
-  USER = 'user',
-  ASSISTANT = 'assistant'
-}
-interface Message {
-  role: Role
-  content: string
-}
-// #endregion
-
-// #region Icon & Empty
+// #region Icon
 function IconUserAvatar() {
   return (
     <div className="h-24px w-24px flex items-center justify-center rd-50% bg-#2dc2d8">
@@ -35,7 +22,9 @@ function IconChatGPTAvatar() {
     </div>
   )
 }
+// #endregion
 
+// #region Child component
 function Empty() {
   return (
     <div className="flex flex-col items-center">
@@ -46,94 +35,52 @@ function Empty() {
     </div>
   )
 }
+
+function Copy(props: { content: string }) {
+  const { message } = App.useApp()
+
+  function handleCopy(content: string) {
+    const copyResult = copy(content)
+    copyResult
+      ? message.success('已复制到剪切板', 1)
+      : message.error('复制失败', 1)
+  }
+
+  return (
+    <i
+      className="i-material-symbols:content-copy-outline invisible text-20px c-#acacbe group-hover:visible active:scale-98 hover:c-white"
+      onClick={() => handleCopy(props.content)}
+    ></i>
+  )
+}
+
+function Edit() {
+  return (
+    <i className="i-ic:baseline-mode-edit invisible text-20px c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
+  )
+}
 // #endregion
 
 function Chat() {
-  const { currentSessionIndex, sessions } = useAppSelector(
-    state => ({
-      currentSessionIndex: state.chat.currentSessionIndex,
-      sessions: state.chat.sessions
-    }),
-    shallowEqual
-  )
-  const dispatch = useAppDispatch()
+  const { userSendMessage, getCurrentSession } = useChatStore(state => ({
+    userSendMessage: state.userSendMessage,
+    getCurrentSession: state.getCurrentSession
+  }))
+  const currentSession = getCurrentSession()
 
   const [input, setInput] = useState('')
-  const [done, setDone] = useState(true)
+  const [isFetching, setIsFetching] = useState(false)
 
   function onInput(val: string) {
     setInput(val)
   }
 
-  const [history, setHistory] = useState<Message[]>([])
-  const { VITE_OPENAI_URL, VITE_OPENAI_KEY, VITE_MAX_SEND_MES_COUNT } =
-    import.meta.env
-  const fetchUrl = `${VITE_OPENAI_URL}/v1/chat/completions`
   const { message } = App.useApp()
 
   function handleSend() {
     if (input) {
-      const controller = new AbortController()
-      const userMsg: Message = {
-        role: Role.USER,
-        content: input
-      }
-      const historyTemp = [...history, userMsg]
-      setHistory(historyTemp)
-      const data = {
-        model: 'gpt-3.5-turbo',
-        messages: historyTemp.slice(-VITE_MAX_SEND_MES_COUNT),
-        stream: true
-      }
-      let remainText = ''
-
-      setDone(false)
-      fetchEventSource(fetchUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-requested-with': 'XMLHttpRequest',
-          Authorization: `Bearer ${VITE_OPENAI_KEY}`
-        },
-        body: JSON.stringify(data),
-        signal: controller.signal,
-        onmessage(msg) {
-          if (msg.data === '[DONE]') {
-            setDone(true)
-            return
-          }
-          const text = msg.data
-          try {
-            const json = JSON.parse(text) as {
-              choices: Array<{
-                delta: {
-                  content: string
-                }
-              }>
-            }
-            const delta = json.choices[0]?.delta?.content
-            if (delta) {
-              remainText += delta
-              const historyTempCopy: Message[] = JSON.parse(
-                JSON.stringify(historyTemp)
-              )
-              const index =
-                historyTempCopy.at(-1)?.role === Role.ASSISTANT
-                  ? historyTempCopy.length - 1
-                  : historyTempCopy.length
-              historyTempCopy[index] = {
-                role: Role.ASSISTANT,
-                content: remainText
-              }
-              setHistory(historyTempCopy)
-            }
-          } catch (error) {
-            console.log('[Request] parse error', text)
-          }
-        }
-      })
+      userSendMessage(input)
     } else {
-      setDone(true)
       message.warning('Please Input your message!')
     }
   }
@@ -143,10 +90,8 @@ function Chat() {
   return (
     <div className="m-auto h-0 max-w-1200px flex flex-1 flex-col px-16px">
       <div className="flex-1 overflow-auto">
-        {/* <IconUserAvatar /> */}
-        {/* <IconChatGPTAvatar /> */}
-        {history.length === 0 && <Empty />}
-        {history.map((item, index) => {
+        {!currentSession && <Empty />}
+        {currentSession?.messages.map((item, index) => {
           const isUser = item.role === Role.USER
           return (
             <div
@@ -159,15 +104,18 @@ function Chat() {
                 </div>
                 <div className="flex-1">
                   <div className="font-bold">{isUser ? 'You' : 'ChatGPT'}</div>
-                  <div>{item.content}</div>
-                  <div className="">
-                    {isUser && (
-                      <i className="i-ic:twotone-edit invisible c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
-                    )}
-                    {!isUser && done && (
-                      <i className="i-mingcute:clipboard-line invisible c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
-                    )}
+                  <div>
+                    <Markdown content={item.content} />
+                    {!isUser &&
+                      index === currentSession.messages.length - 1 &&
+                      isFetching && (
+                        <i className="i-svg-spinners:bars-fade text-20px" />
+                      )}
                   </div>
+                  <Space size={8}>
+                    {!isFetching && <Copy content={item.content} />}
+                    {isUser && <Edit />}
+                  </Space>
                 </div>
               </div>
             </div>
@@ -189,15 +137,15 @@ function Chat() {
             className="absolute right-10px top-50% rounded-lg p-4px active:opacity-80"
             style={{ transform: 'translateY(-50%)' }}
             onClick={() => {
-              done ? handleSend() : handleStop()
+              isFetching ? handleStop() : handleSend()
             }}
           >
             <i
               className={classNames(
                 'c-white active:scale-98',
-                done
-                  ? 'i-ri:send-plane-fill'
-                  : 'i-solar:stop-circle-bold-duotone text-22px'
+                isFetching
+                  ? 'i-solar:stop-circle-bold-duotone text-22px'
+                  : 'i-ri:send-plane-fill'
               )}
             />
           </button>
