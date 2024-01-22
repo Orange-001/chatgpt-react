@@ -1,10 +1,12 @@
-import { App, Input } from 'antd'
+import { App, Input, Space } from 'antd'
 import classNames from 'classnames'
+import copy from 'copy-to-clipboard'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
+import Markdown from '@/components/Markdown'
 import useChatStore, { Role } from '@/store/chat'
 
-// #region Icon & Empty
+// #region Icon
 function IconUserAvatar() {
   return (
     <div className="h-24px w-24px flex items-center justify-center rd-50% bg-#2dc2d8">
@@ -20,7 +22,9 @@ function IconChatGPTAvatar() {
     </div>
   )
 }
+// #endregion
 
+// #region Child component
 function Empty() {
   return (
     <div className="flex flex-col items-center">
@@ -29,6 +33,30 @@ function Empty() {
       </div>
       <div className="mb-5 text-2xl font-medium">How can I help you today?</div>
     </div>
+  )
+}
+
+function Copy(props: { content: string }) {
+  const { message } = App.useApp()
+
+  function handleCopy(content: string) {
+    const copyResult = copy(content)
+    copyResult
+      ? message.success('已复制到剪切板', 1)
+      : message.error('复制失败', 1)
+  }
+
+  return (
+    <i
+      className="i-material-symbols:content-copy-outline invisible text-20px c-#acacbe group-hover:visible active:scale-98 hover:c-white"
+      onClick={() => handleCopy(props.content)}
+    ></i>
+  )
+}
+
+function Edit() {
+  return (
+    <i className="i-ic:baseline-mode-edit invisible text-20px c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
   )
 }
 // #endregion
@@ -77,21 +105,17 @@ function Chat() {
                 <div className="flex-1">
                   <div className="font-bold">{isUser ? 'You' : 'ChatGPT'}</div>
                   <div>
-                    {item.content}
+                    <Markdown content={item.content} />
                     {!isUser &&
                       index === currentSession.messages.length - 1 &&
                       isFetching && (
                         <i className="i-svg-spinners:bars-fade text-20px" />
                       )}
                   </div>
-                  <div className="">
-                    {isUser && (
-                      <i className="i-ic:twotone-edit invisible c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
-                    )}
-                    {!isUser && !isFetching && (
-                      <i className="i-mingcute:clipboard-line invisible c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
-                    )}
-                  </div>
+                  <Space size={8}>
+                    {!isFetching && <Copy content={item.content} />}
+                    {isUser && <Edit />}
+                  </Space>
                 </div>
               </div>
             </div>

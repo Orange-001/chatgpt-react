@@ -26,3 +26,41 @@ button {
     border-radius: 9999px;
   }
 }
+
+pre {
+  position: relative;
+
+  code {
+    overflow: auto !important;
+  }
+
+  &:hover .copy-code-button {
+    pointer-events: all;
+    transform: translateX(0px);
+    opacity: 0.5;
+  }
+
+  .copy-code-button {
+    position: absolute;
+    right: 10px;
+    top: 1em;
+    cursor: pointer;
+    padding: 0px 5px;
+    background-color: rgb(187, 187, 187);
+    color: rgb(30, 30, 30);
+    border: 1px solid rgba(255, 255, 255, 0.192);
+    border-radius: 10px;
+    transform: translateX(10px);
+    pointer-events: none;
+    opacity: 0;
+    transition: all ease 0.3s;
+
+    &:after {
+      content: 'copy';
+    }
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
