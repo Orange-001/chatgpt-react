@@ -1,4 +1,4 @@
-import { Tooltip } from 'antd'
+import { Input, InputRef, Tooltip } from 'antd'
 import classNames from 'classnames'
 import dayjs from 'dayjs'
 
@@ -44,6 +44,44 @@ function NewChat() {
   )
 }
 
+function EditSessionTopic(props: {
+  id: string
+  value: string
+  isActive: boolean
+  setShowInput: (show: boolean) => void
+}) {
+  const { id, value, isActive, setShowInput } = props
+  const { updateSession } = useChatStore(state => ({
+    updateSession: state.updateSession
+  }))
+  const ref = useRef<InputRef>(null)
+
+  useEffect(() => {
+    ref.current?.focus()
+  }, [])
+
+  return (
+    <Input
+      ref={ref}
+      value={value}
+      onChange={e => {
+        updateSession(id, { topic: e.target.value })
+      }}
+      onPressEnter={() => {
+        ref.current?.blur()
+      }}
+      onBlur={() => {
+        setShowInput(false)
+      }}
+      className={classNames(
+        'p-0 c-white hover:bg-#202123 group-hover:bg-#202123 transition-none',
+        isActive ? 'bg-#343541!' : 'bg-#000000'
+      )}
+      variant="borderless"
+    />
+  )
+}
+
 function SessionList() {
   const { currentSessionId, sessions, setCurrentSessionId, delSessionById } =
     useChatStore(state => ({
@@ -53,6 +91,8 @@ function SessionList() {
       delSessionById: state.delSessionById
     }))
   const [sessionGroups, setSessionGroups] = useState<SessionGroup[]>([])
+  const [showInput, setShowInput] = useState(false)
+  const [targetId, setTargetId] = useState('')
 
   useEffect(() => {
     const temp: SessionGroup[] = [
@@ -81,12 +121,13 @@ function SessionList() {
     setCurrentSessionId(id)
   }
 
-  function handleRename() {
-    console.log('handleRename')
-  }
-
   function handleDel(id: string) {
     delSessionById(id)
+  }
+
+  function openEdit(id: string) {
+    setShowInput(true)
+    setTargetId(id)
   }
 
   return (
@@ -100,51 +141,72 @@ function SessionList() {
               </h3>
               <ol>
                 {item.sessions.map(cItem => {
+                  const isActive = cItem.id === currentSessionId
+                  const isTarget = cItem.id === targetId
                   return (
                     <li
                       key={cItem.id}
                       className={classNames(
                         'group relative cursor-pointer rounded-lg p-2 text-sm hover:bg-#202123 active:opacity-90',
-                        currentSessionId === cItem.id ? 'bg-#343541!' : ''
+                        isActive ? 'bg-#343541!' : ''
                       )}
                       onClick={() => handleSelectSession(cItem.id)}
+                      onDoubleClick={() => openEdit(cItem.id)}
                     >
-                      <div className="overflow-hidden whitespace-nowrap">
-                        {cItem.topic}
-                      </div>
-                      <div
-                        className={classNames(
-                          'w-20 absolute bottom-0 right-0 top-0 hidden justify-end items-center gap-1.5 pr-2 group-hover:flex rounded-lg',
-                          currentSessionId === cItem.id ? 'flex' : ''
-                        )}
-                        style={{
-                          backgroundImage:
-                            currentSessionId === cItem.id
-                              ? 'linear-gradient(to left, #343541 60%, rgba(255, 255, 255, 0))'
-                              : 'linear-gradient(to left, #202123 60%, rgba(0, 0, 0, 0))'
-                        }}
-                      >
-                        <Tooltip placement="top" title="rename" color="#333333">
-                          <button
-                            onClick={e => {
-                              e.stopPropagation()
-                              handleRename()
+                      {showInput && isTarget ? (
+                        <EditSessionTopic
+                          id={cItem.id}
+                          value={cItem.topic}
+                          isActive={isActive}
+                          setShowInput={setShowInput}
+                        />
+                      ) : (
+                        <>
+                          <div className="overflow-hidden whitespace-nowrap">
+                            {cItem.topic}
+                          </div>
+                          <div
+                            className={classNames(
+                              'w-20 absolute bottom-0 right-0 top-0 hidden justify-end items-center gap-1.5 pr-2 group-hover:flex rounded-lg',
+                              isActive ? 'flex' : ''
+                            )}
+                            style={{
+                              backgroundImage: isActive
+                                ? 'linear-gradient(to left, #343541 60%, rgba(255, 255, 255, 0))'
+                                : 'linear-gradient(to left, #202123 60%, rgba(0, 0, 0, 0))'
                             }}
                           >
-                            <i className="i-material-symbols:edit c-white hover:opacity-70"></i>
-                          </button>
-                        </Tooltip>
-                        <Tooltip placement="top" title="delete" color="#333333">
-                          <button
-                            onClick={e => {
-                              e.stopPropagation()
-                              handleDel(cItem.id)
-                            }}
-                          >
-                            <i className="i-material-symbols:delete c-white hover:opacity-70"></i>
-                          </button>
-                        </Tooltip>
-                      </div>
+                            <Tooltip
+                              placement="top"
+                              title="rename"
+                              color="#333333"
+                            >
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  openEdit(cItem.id)
+                                }}
+                              >
+                                <i className="i-ph:pencil-simple-fill text-18px c-white hover:opacity-70"></i>
+                              </button>
+                            </Tooltip>
+                            <Tooltip
+                              placement="top"
+                              title="delete"
+                              color="#333333"
+                            >
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  handleDel(cItem.id)
+                                }}
+                              >
+                                <i className="i-material-symbols:delete text-18px c-white hover:opacity-70"></i>
+                              </button>
+                            </Tooltip>
+                          </div>
+                        </>
+                      )}
                     </li>
                   )
                 })}

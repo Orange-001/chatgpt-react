@@ -184,8 +184,11 @@ const useChatStore = create<Chat>()(
 
           updateSession(id, session) {
             set(state => {
-              const item = state.getSessionById(id)
-              item && Object.assign(item, session)
+              state.sessions.forEach(item => {
+                if (item.id === id) {
+                  Object.assign(item, session)
+                }
+              })
             })
           },
 

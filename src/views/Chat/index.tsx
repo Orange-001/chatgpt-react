@@ -56,7 +56,7 @@ function Copy(props: { content: string }) {
 
 function Edit() {
   return (
-    <i className="i-ic:baseline-mode-edit invisible text-20px c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
+    <i className="i-ri:quill-pen-line invisible text-20px c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
   )
 }
 // #endregion
