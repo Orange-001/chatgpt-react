@@ -31,12 +31,12 @@ interface Chat {
   summarizeSession: (messages: Message[]) => void
   updateSession: (id: string, session: Partial<Session>) => void
   getSessionById: (id: string) => Session | undefined
-  userSendMessage: (content: string) => void
+  userSendMessage: (content: string, currentModel: string) => void
   getCurrentSession: () => Session | undefined
   delSessionById: (id: string) => void
   getSessionIndexById: (id: string) => number
   getCurrentSessionIndex: () => number
-  fetchAnswer: () => void
+  fetchAnswer: (currentModel: string) => void
 }
 
 const useChatStore = create<Chat>()(
@@ -75,7 +75,7 @@ const useChatStore = create<Chat>()(
             })
           },
 
-          async userSendMessage(content: string) {
+          async userSendMessage(content, currentModel) {
             if (get().getCurrentSession()) {
               set(state => {
                 state.sessions.forEach(v => {
@@ -105,10 +105,11 @@ const useChatStore = create<Chat>()(
                 state.currentSessionId = get().sessions[0].id
               })
             }
-            get().fetchAnswer()
+
+            get().fetchAnswer(currentModel)
           },
 
-          fetchAnswer() {
+          fetchAnswer(currentModel) {
             const currentSession = get().getCurrentSession()
             if (!currentSession) return
 
@@ -124,7 +125,7 @@ const useChatStore = create<Chat>()(
                 Authorization: `Bearer ${VITE_OPENAI_KEY}`
               },
               body: JSON.stringify({
-                model: 'gpt-3.5-turbo',
+                model: currentModel,
                 messages: currentSession.messages,
                 stream: true,
                 temperature: 0.5,
