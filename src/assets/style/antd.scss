@@ -1,3 +1,4 @@
+// #region Select
 .ant-select {
   * {
     color: #fff;
@@ -10,7 +11,9 @@
     font-weight: bold;
   }
 }
+// #endregion
 
+// #region Dropdown
 .ant-select-dropdown {
   background-color: rgb(32, 33, 35);
 
@@ -43,3 +46,87 @@
     }
   }
 }
+
+// #endregion
+
+// #region Modal
+.ant-modal {
+  & &-content,
+  .ant-modal-header {
+    color: #fff;
+    background-color: rgb(52, 53, 65);
+    .ant-modal-title {
+      color: #fff;
+    }
+  }
+}
+// #endregion
+
+// #region Form
+.ant-form {
+  .ant-form-item .ant-form-item-label > label {
+    &,
+    * {
+      color: #fff;
+    }
+  }
+}
+// #endregion
+
+// #region InputNumber
+.ant-input-number {
+  &,
+  &:hover,
+  &:focus-within {
+    background-color: transparent;
+    border-color: #6e6868;
+  }
+  .ant-input-number-input {
+    color: #fff;
+  }
+  .ant-input-number-handler-wrap {
+    background-color: transparent;
+    .ant-input-number-handler * {
+      color: #fff;
+    }
+  }
+}
+// #endregion
+
+// #region Input
+.ant-input {
+  &,
+  &:hover,
+  &:focus {
+    background-color: transparent;
+    border-color: #6e6868;
+  }
+  color: #fff;
+}
+// #endregion
+
+// #region Slider
+.ant-slider {
+  .ant-slider-rail {
+    background-color: #2e2e3f;
+  }
+  .ant-slider-track {
+    background-color: rgb(255, 255, 255, 0.8);
+  }
+  &:hover {
+    .ant-slider-rail {
+      background-color: #2c2c41;
+    }
+  }
+  .ant-slider-handle {
+    &:focus::after,
+    &:hover::after {
+      box-shadow: 0 0 0 4px #91caff;
+    }
+  }
+  .ant-slider-mark-text-active {
+    color: #fff;
+  }
+}
+
+// #endregion

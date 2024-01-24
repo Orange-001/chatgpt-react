@@ -3,6 +3,8 @@ import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 
+import { Settings } from './setttings'
+
 export interface Model {
   id: string
   object: string
@@ -13,19 +15,19 @@ export interface Model {
 interface Models {
   currentModel: string
   setCurrentModel: (val: string) => void
-  getModels: () => Promise<Model[]>
+  getModels: (settings: Settings) => Promise<Model[]>
 }
 
 const useModelsStore = create<Models>()(
   persist(
     immer(
-      devtools((set, get, api): Models => {
+      devtools((set): Models => {
         return {
           currentModel: 'gpt-3.5-turbo',
 
-          async getModels() {
-            const { VITE_OPENAI_URL, VITE_OPENAI_KEY } = import.meta.env
-            const fetchUrl = `${VITE_OPENAI_URL}/v1/models`
+          async getModels(settings) {
+            const { url, apiKey } = settings
+            const fetchUrl = `${url}/v1/models`
 
             try {
               const res = await fetch(fetchUrl, {
@@ -33,7 +35,7 @@ const useModelsStore = create<Models>()(
                 headers: {
                   'Content-Type': 'application/json',
                   'x-requested-with': 'XMLHttpRequest',
-                  Authorization: `Bearer ${VITE_OPENAI_KEY}`
+                  Authorization: `Bearer ${apiKey}`
                 }
               })
               if (res.status === 200) {

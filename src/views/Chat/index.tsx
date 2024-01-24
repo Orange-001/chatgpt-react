@@ -6,6 +6,7 @@ import IconNewChat from '@/assets/icon/new-chat.svg?react'
 import Markdown from '@/components/Markdown'
 import useChatStore, { Role } from '@/store/chat'
 import useModelsStore from '@/store/models'
+import useSettingsStore from '@/store/setttings'
 
 // #region Icon
 function IconUserAvatar() {
@@ -66,6 +67,9 @@ function Chat() {
   const { currentModel } = useModelsStore(state => ({
     currentModel: state.currentModel
   }))
+  const { settings } = useSettingsStore(state => ({
+    settings: state.settings
+  }))
   const { userSendMessage, getCurrentSession } = useChatStore(state => ({
     userSendMessage: state.userSendMessage,
     getCurrentSession: state.getCurrentSession
@@ -83,7 +87,7 @@ function Chat() {
 
   function handleSend() {
     if (input) {
-      userSendMessage(input, currentModel)
+      userSendMessage(input, currentModel, settings)
     } else {
       message.warning('Please Input your message!')
     }

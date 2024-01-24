@@ -32,6 +32,9 @@ dependencies:
   dayjs:
     specifier: ^1.11.10
     version: 1.11.10
+  lodash:
+    specifier: ^4.17.21
+    version: 4.17.21
   mermaid:
     specifier: ^10.6.1
     version: 10.6.1
@@ -91,6 +94,9 @@ devDependencies:
   '@iconify/json':
     specifier: ^2.2.161
     version: 2.2.168
+  '@types/lodash':
+    specifier: ^4.14.202
+    version: 4.14.202
   '@types/node':
     specifier: ^20.11.0
     version: 20.11.0
@@ -3286,6 +3292,10 @@ packages:
   /@types/katex@0.16.7:
     resolution: {integrity: sha512-HMwFiRujE5PjrgwHQ25+bsLJgowjGjm5Z8FVSf0N6PwgJrwxH0QxzHYDcKsTfV3wva0vzrpqMTJS2jXPr5BMEQ==}
     dev: false
+
+  /@types/lodash@4.14.202:
+    resolution: {integrity: sha512-OvlIYQK9tNneDlS0VN54LLd5uiPCBOp7gS5Z0f1mjoJYBrtStzgmJBxONW3U6OZqdtNzZPmn9BS/7WI7BFFcFQ==}
+    dev: true
 
   /@types/mdast@3.0.15:
     resolution: {integrity: sha512-LnwD+mUEfxWMa1QpDraczIn6k0Ee3SMicuYSSzS6ZYl2gKS09EClnJYGd8Du6rfc5r/GZEk5o1mRb8TaTj03sQ==}

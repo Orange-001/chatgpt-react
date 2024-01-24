@@ -2,9 +2,12 @@ import { fetchEventSource } from '@fortaine/fetch-event-source'
 import { nanoid } from '@reduxjs/toolkit'
 import { message } from 'antd'
 import dayjs from 'dayjs'
+import { omit } from 'lodash'
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
+
+import { Settings } from './setttings'
 
 export enum Role {
   SYSTEM = 'system',
@@ -31,18 +34,22 @@ interface Chat {
   summarizeSession: (messages: Message[]) => void
   updateSession: (id: string, session: Partial<Session>) => void
   getSessionById: (id: string) => Session | undefined
-  userSendMessage: (content: string, currentModel: string) => void
+  userSendMessage: (
+    content: string,
+    currentModel: string,
+    settings: Settings
+  ) => void
   getCurrentSession: () => Session | undefined
   delSessionById: (id: string) => void
   getSessionIndexById: (id: string) => number
   getCurrentSessionIndex: () => number
-  fetchAnswer: (currentModel: string) => void
+  fetchAnswer: (currentModel: string, settings: Settings) => void
 }
 
 const useChatStore = create<Chat>()(
   persist(
     immer(
-      devtools((set, get, api): Chat => {
+      devtools((set, get): Chat => {
         return {
           currentSessionId: '',
           sessions: [],
@@ -75,7 +82,7 @@ const useChatStore = create<Chat>()(
             })
           },
 
-          async userSendMessage(content, currentModel) {
+          async userSendMessage(content, currentModel, settings) {
             if (get().getCurrentSession()) {
               set(state => {
                 state.sessions.forEach(v => {
@@ -106,32 +113,29 @@ const useChatStore = create<Chat>()(
               })
             }
 
-            get().fetchAnswer(currentModel)
+            get().fetchAnswer(currentModel, settings)
           },
 
-          fetchAnswer(currentModel) {
+          fetchAnswer(currentModel, settings) {
             const currentSession = get().getCurrentSession()
             if (!currentSession) return
 
             const controller = new AbortController()
-            const { VITE_OPENAI_URL, VITE_OPENAI_KEY } = import.meta.env
-            const fetchUrl = `${VITE_OPENAI_URL}/v1/chat/completions`
+            const { url, apiKey } = settings
+            const fetchUrl = `${url}/v1/chat/completions`
 
             fetchEventSource(fetchUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'x-requested-with': 'XMLHttpRequest',
-                Authorization: `Bearer ${VITE_OPENAI_KEY}`
+                Authorization: `Bearer ${apiKey}`
               },
               body: JSON.stringify({
                 model: currentModel,
                 messages: currentSession.messages,
                 stream: true,
-                temperature: 0.5,
-                top_p: 1,
-                presence_penalty: 0,
-                frequency_penalty: 0
+                ...omit(settings, ['url', 'apiKey'])
               }),
               signal: controller.signal,
               onmessage(msg) {
