@@ -63,9 +63,9 @@ function EditSessionTopic(props: {
   return (
     <Input
       ref={ref}
-      value={value}
+      defaultValue={value}
       onChange={e => {
-        updateSession(id, { topic: e.target.value })
+        updateSession(id, { topic: e.currentTarget.value })
       }}
       onPressEnter={() => {
         ref.current?.blur()
