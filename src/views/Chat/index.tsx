@@ -111,7 +111,9 @@ function Chat() {
                   {isUser ? <IconUserAvatar /> : <IconChatGPTAvatar />}
                 </div>
                 <div className="flex-1">
-                  <div className="font-bold">{isUser ? 'You' : 'ChatGPT'}</div>
+                  <div className="font-bold">
+                    {isUser ? 'You' : 'Assistant'}
+                  </div>
                   <div>
                     <Markdown content={item.content} />
                     {!isUser &&
@@ -133,7 +135,7 @@ function Chat() {
       <div className="">
         <div className="relative">
           <Input.TextArea
-            placeholder="Message ChatGPT..."
+            placeholder="Message Assistant..."
             className="c-white b-#555561! bg-#343541! placeholder:c-#94959b"
             value={input}
             onInput={e => onInput(e.currentTarget.value)}
@@ -160,7 +162,8 @@ function Chat() {
         </div>
         <div>
           <p className="px-2 py-2 text-center text-xs text-gray-300 md:px-[60px]">
-            ChatGPT can make mistakes. Consider checking important information.
+            Assistant can make mistakes. Consider checking important
+            information.
           </p>
         </div>
       </div>
