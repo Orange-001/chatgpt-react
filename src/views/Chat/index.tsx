@@ -123,8 +123,8 @@ function Chat() {
             const isUser = item.role === Role.USER
             return (
               <div
-                key={index}
-                className="group m-auto gap-6 px-4 py-2 text-base text-#ececf1 lg:max-w-[40rem] md:max-w-3xl xl:max-w-[48rem] lg:px-1 md:px-5 xl:px-5"
+                key={item.id}
+                className="group m-auto animate-name-[slide-in] animate-duration-500 animate-ease gap-6 px-4 py-2 text-base text-#ececf1 lg:max-w-[40rem] md:max-w-3xl xl:max-w-[48rem] lg:px-1 md:px-5 xl:px-5"
               >
                 <div className="flex gap-3">
                   <div className="">
@@ -136,17 +136,12 @@ function Chat() {
                     </div>
                     <div>
                       <Markdown content={item.content} />
-                      {!isUser &&
-                        index === currentSession.messages.length - 1 &&
-                        currentSession.streaming && (
-                          <i className="i-svg-spinners:bars-fade text-20px" />
-                        )}
                     </div>
                     <Space size={8}>
                       {!currentSession.streaming && (
                         <Copy content={item.content} />
                       )}
-                      {isUser && <Edit />}
+                      {/* {isUser && <Edit />} */}
                     </Space>
                   </div>
                 </div>

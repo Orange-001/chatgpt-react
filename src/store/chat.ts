@@ -18,6 +18,7 @@ export enum Role {
 }
 
 export interface Message {
+  id: string
   role: Role
   content: string
 }
@@ -91,6 +92,7 @@ const useChatStore = create<Chat>()(
                 state.sessions.forEach(v => {
                   if (v.id === state.currentSessionId) {
                     v.messages.push({
+                      id: nanoid(),
                       role: Role.USER,
                       content
                     })
@@ -105,6 +107,7 @@ const useChatStore = create<Chat>()(
                   topic: 'New Chat',
                   messages: [
                     {
+                      id: nanoid(),
                       role: Role.USER,
                       content
                     }
@@ -134,6 +137,10 @@ const useChatStore = create<Chat>()(
 
             get().updateSession(currentSessionId, { streaming: true })
 
+            const messages = currentSession.messages.map(item => ({
+              role: item.role,
+              content: item.content
+            }))
             fetchEventSource(fetchUrl, {
               method: 'POST',
               headers: {
@@ -143,7 +150,7 @@ const useChatStore = create<Chat>()(
               },
               body: JSON.stringify({
                 model: currentModel,
-                messages: currentSession.messages,
+                messages,
                 stream: true,
                 ...omit(settings, ['url', 'apiKey'])
               }),
@@ -151,7 +158,7 @@ const useChatStore = create<Chat>()(
               onmessage(msg) {
                 try {
                   if (msg.data === '[DONE]') {
-                    if (currentSession?.id) {
+                    if (currentSessionId) {
                       get().updateSession(currentSessionId, {
                         streaming: false
                       })
@@ -170,10 +177,18 @@ const useChatStore = create<Chat>()(
                     set(state => {
                       const session = state.getSessionById(currentSessionId)
                       if (!session) return
-                      state.sessions[currentSessionIndex].messages[index] = {
-                        role: Role.ASSISTANT,
-                        content:
-                          (session.messages[index]?.content ?? '') + delta
+                      const latestMessage =
+                        state.sessions[currentSessionIndex].messages[index]
+                      if (latestMessage) {
+                        state.sessions[currentSessionIndex].messages[
+                          index
+                        ].content += delta
+                      } else {
+                        state.sessions[currentSessionIndex].messages[index] = {
+                          id: nanoid(),
+                          role: Role.ASSISTANT,
+                          content: delta
+                        }
                       }
                     })
                   }
