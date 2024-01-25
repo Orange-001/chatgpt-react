@@ -7,7 +7,6 @@ export interface Settings {
   apiKey: string
   temperature: number
   top_p: number
-  max_tokens: number
   presence_penalty: number
   frequency_penalty: number
 }
@@ -28,7 +27,6 @@ const useSettingsStore = create<SettingsStore>()(
             apiKey: VITE_OPENAI_KEY,
             temperature: 0.5,
             top_p: 1.0,
-            max_tokens: 4000,
             presence_penalty: 0.0,
             frequency_penalty: 0.0
           },

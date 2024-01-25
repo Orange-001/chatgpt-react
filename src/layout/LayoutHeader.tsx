@@ -3,7 +3,6 @@ import {
   Form,
   FormInstance,
   Input,
-  InputNumber,
   Modal,
   Select,
   Slider,
@@ -119,21 +118,6 @@ function Settings() {
               <Input />
             </Form.Item>
             <Form.Item<FieldType>
-              label="单次回复限制 (max_tokens)"
-              name="max_tokens"
-              tooltip={{
-                title: '单次交互所用的最大 Token 数',
-                icon: <InfoCircleOutlined />
-              }}
-            >
-              <InputNumber
-                controls={{
-                  upIcon: <i className="i-ic:sharp-keyboard-arrow-up" />,
-                  downIcon: <i className="i-ic:sharp-keyboard-arrow-down" />
-                }}
-              />
-            </Form.Item>
-            <Form.Item<FieldType>
               label="随机性 (temperature)"
               name="temperature"
               tooltip={{
@@ -143,7 +127,7 @@ function Settings() {
             >
               <Slider
                 min={0}
-                max={1}
+                max={2}
                 step={0.1}
                 marks={marksCollection?.temperature ?? {}}
                 tooltip={{ open: false }}
