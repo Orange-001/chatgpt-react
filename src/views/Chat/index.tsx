@@ -83,11 +83,18 @@ function Chat() {
     setInput(val)
   }
 
+  function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      handleSend()
+    }
+  }
+
   const { message } = App.useApp()
 
   function handleSend() {
     if (input) {
       userSendMessage(input, currentModel, settings)
+      setInput('')
     } else {
       message.warning('Please Input your message!')
     }
@@ -96,75 +103,78 @@ function Chat() {
   function handleStop() {}
 
   return (
-    <div className="m-auto h-0 max-w-1200px flex flex-1 flex-col px-16px">
-      <div className="flex-1 overflow-auto">
-        {!currentSession && <Empty />}
-        {currentSession?.messages.map((item, index) => {
-          const isUser = item.role === Role.USER
-          return (
-            <div
-              key={index}
-              className="group gap-6 px-4 py-2 text-base text-#ececf1"
-            >
-              <div className="flex gap-3">
-                <div className="">
-                  {isUser ? <IconUserAvatar /> : <IconChatGPTAvatar />}
-                </div>
-                <div className="flex-1">
-                  <div className="font-bold">
-                    {isUser ? 'You' : 'Assistant'}
+    <div className="h-0 flex-1 px-16px">
+      <div className="h-full flex flex-col">
+        <div className="flex-1 overflow-auto px-1.25rem">
+          {!currentSession && <Empty />}
+          {currentSession?.messages.map((item, index) => {
+            const isUser = item.role === Role.USER
+            return (
+              <div
+                key={index}
+                className="group m-auto gap-6 px-4 py-2 text-base text-#ececf1 lg:max-w-[40rem] md:max-w-3xl xl:max-w-[48rem] lg:px-1 md:px-5 xl:px-5"
+              >
+                <div className="flex gap-3">
+                  <div className="">
+                    {isUser ? <IconUserAvatar /> : <IconChatGPTAvatar />}
                   </div>
-                  <div>
-                    <Markdown content={item.content} />
-                    {!isUser &&
-                      index === currentSession.messages.length - 1 &&
-                      isFetching && (
-                        <i className="i-svg-spinners:bars-fade text-20px" />
-                      )}
+                  <div className="flex-1">
+                    <div className="font-bold">
+                      {isUser ? 'You' : 'Assistant'}
+                    </div>
+                    <div>
+                      <Markdown content={item.content} />
+                      {!isUser &&
+                        index === currentSession.messages.length - 1 &&
+                        isFetching && (
+                          <i className="i-svg-spinners:bars-fade text-20px" />
+                        )}
+                    </div>
+                    <Space size={8}>
+                      {!isFetching && <Copy content={item.content} />}
+                      {isUser && <Edit />}
+                    </Space>
                   </div>
-                  <Space size={8}>
-                    {!isFetching && <Copy content={item.content} />}
-                    {isUser && <Edit />}
-                  </Space>
                 </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
-      <div className="">
-        <div className="relative">
-          <Input.TextArea
-            placeholder="Message Assistant..."
-            className="c-white b-#555561! bg-#343541! placeholder:c-#94959b"
-            value={input}
-            onInput={e => onInput(e.currentTarget.value)}
-            autoSize={{ minRows: 1, maxRows: 8 }}
-            autoFocus={true}
-            size="large"
-          />
-          <button
-            className="absolute right-10px top-50% rounded-lg p-4px active:opacity-80"
-            style={{ transform: 'translateY(-50%)' }}
-            onClick={() => {
-              isFetching ? handleStop() : handleSend()
-            }}
-          >
-            <i
-              className={classNames(
-                'c-white active:scale-98',
-                isFetching
-                  ? 'i-solar:stop-circle-bold-duotone text-22px'
-                  : 'i-ri:send-plane-fill'
-              )}
-            />
-          </button>
+            )
+          })}
         </div>
-        <div>
-          <p className="px-2 py-2 text-center text-xs text-gray-300 md:px-[60px]">
-            Assistant can make mistakes. Consider checking important
-            information.
-          </p>
+        <div className="">
+          <div className="relative m-auto lg:max-w-[40rem] md:max-w-3xl xl:max-w-[48rem]">
+            <Input.TextArea
+              placeholder="Message Assistant..."
+              className="c-white b-#555561! bg-#343541! py-14px! placeholder:c-#94959b"
+              value={input}
+              onInput={e => onInput(e.currentTarget.value)}
+              onKeyDown={onKeyDown}
+              autoSize={{ minRows: 1, maxRows: 8 }}
+              autoFocus={true}
+              size="large"
+            />
+            <button
+              className="absolute right-10px top-50% rounded-lg p-4px active:opacity-80"
+              style={{ transform: 'translateY(-50%)' }}
+              onClick={() => {
+                isFetching ? handleStop() : handleSend()
+              }}
+            >
+              <i
+                className={classNames(
+                  'c-white active:scale-98',
+                  isFetching
+                    ? 'i-solar:stop-circle-bold-duotone text-22px'
+                    : 'i-ri:send-plane-fill'
+                )}
+              />
+            </button>
+          </div>
+          <div>
+            <p className="px-2 py-2 text-center text-xs text-gray-300 md:px-[60px]">
+              Assistant can make mistakes. Consider checking important
+              information.
+            </p>
+          </div>
         </div>
       </div>
     </div>

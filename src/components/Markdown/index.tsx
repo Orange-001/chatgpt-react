@@ -176,7 +176,7 @@ const Markdown: FC<Markdown> = memo(props => {
     <div
       className="markdown-body"
       style={{
-        fontSize: `${props.fontSize ?? 14}px`
+        fontSize: `${props.fontSize ?? 16}px`
       }}
       onContextMenu={props.onContextMenu}
       onDoubleClickCapture={props.onDoubleClickCapture}
