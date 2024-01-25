@@ -25,10 +25,10 @@ const useSettingsStore = create<SettingsStore>()(
           settings: {
             url: VITE_OPENAI_URL,
             apiKey: VITE_OPENAI_KEY,
-            temperature: 0.5,
-            top_p: 1.0,
-            presence_penalty: 0.0,
-            frequency_penalty: 0.0
+            temperature: 0.4,
+            top_p: 1,
+            presence_penalty: 0,
+            frequency_penalty: 0
           },
 
           setSettings(settings) {

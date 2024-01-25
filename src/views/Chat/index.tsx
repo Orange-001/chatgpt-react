@@ -4,6 +4,7 @@ import copy from 'copy-to-clipboard'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
 import Markdown from '@/components/Markdown'
+import { ChatControllerPool } from '@/controller'
 import useChatStore, { Role } from '@/store/chat'
 import useModelsStore from '@/store/models'
 import useSettingsStore from '@/store/setttings'
@@ -64,20 +65,27 @@ function Edit() {
 // #endregion
 
 function Chat() {
+  const { message } = App.useApp()
   const { currentModel } = useModelsStore(state => ({
     currentModel: state.currentModel
   }))
   const { settings } = useSettingsStore(state => ({
     settings: state.settings
   }))
-  const { userSendMessage, getCurrentSession } = useChatStore(state => ({
+  const {
+    currentSessionId,
+    userSendMessage,
+    getCurrentSession,
+    updateSession
+  } = useChatStore(state => ({
+    currentSessionId: state.currentSessionId,
     userSendMessage: state.userSendMessage,
-    getCurrentSession: state.getCurrentSession
+    getCurrentSession: state.getCurrentSession,
+    updateSession: state.updateSession
   }))
   const currentSession = getCurrentSession()
 
   const [input, setInput] = useState('')
-  const [isFetching, setIsFetching] = useState(false)
 
   function onInput(val: string) {
     setInput(val)
@@ -89,8 +97,6 @@ function Chat() {
     }
   }
 
-  const { message } = App.useApp()
-
   function handleSend() {
     if (input) {
       userSendMessage(input, currentModel, settings)
@@ -100,7 +106,13 @@ function Chat() {
     }
   }
 
-  function handleStop() {}
+  function handleStop() {
+    if (currentSessionId) {
+      updateSession(currentSessionId, { streaming: false })
+      ChatControllerPool.stop(currentSessionId)
+      ChatControllerPool.remove(currentSessionId)
+    }
+  }
 
   return (
     <div className="h-0 flex-1 px-16px">
@@ -126,12 +138,14 @@ function Chat() {
                       <Markdown content={item.content} />
                       {!isUser &&
                         index === currentSession.messages.length - 1 &&
-                        isFetching && (
+                        currentSession.streaming && (
                           <i className="i-svg-spinners:bars-fade text-20px" />
                         )}
                     </div>
                     <Space size={8}>
-                      {!isFetching && <Copy content={item.content} />}
+                      {!currentSession.streaming && (
+                        <Copy content={item.content} />
+                      )}
                       {isUser && <Edit />}
                     </Space>
                   </div>
@@ -156,13 +170,13 @@ function Chat() {
               className="absolute right-10px top-50% rounded-lg p-4px active:opacity-80"
               style={{ transform: 'translateY(-50%)' }}
               onClick={() => {
-                isFetching ? handleStop() : handleSend()
+                currentSession?.streaming ? handleStop() : handleSend()
               }}
             >
               <i
                 className={classNames(
                   'c-white active:scale-98',
-                  isFetching
+                  currentSession?.streaming
                     ? 'i-solar:stop-circle-bold-duotone text-22px'
                     : 'i-ri:send-plane-fill'
                 )}

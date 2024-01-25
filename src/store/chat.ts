@@ -7,6 +7,8 @@ import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 
+import { ChatControllerPool } from '@/controller'
+
 import { Settings } from './setttings'
 
 export enum Role {
@@ -25,6 +27,7 @@ export interface Session {
   topic: string
   createTime: string
   messages: Message[]
+  streaming: boolean
 }
 
 interface Chat {
@@ -105,7 +108,8 @@ const useChatStore = create<Chat>()(
                       role: Role.USER,
                       content
                     }
-                  ]
+                  ],
+                  streaming: false
                 })
               })
               set(state => {
@@ -118,11 +122,17 @@ const useChatStore = create<Chat>()(
 
           fetchAnswer(currentModel, settings) {
             const currentSession = get().getCurrentSession()
+            const currentSessionId = get().currentSessionId
+            const currentSessionIndex = get().getCurrentSessionIndex()
             if (!currentSession) return
 
             const controller = new AbortController()
             const { url, apiKey } = settings
             const fetchUrl = `${url}/v1/chat/completions`
+
+            ChatControllerPool.addController(currentSessionId, controller)
+
+            get().updateSession(currentSessionId, { streaming: true })
 
             fetchEventSource(fetchUrl, {
               method: 'POST',
@@ -141,33 +151,43 @@ const useChatStore = create<Chat>()(
               onmessage(msg) {
                 try {
                   if (msg.data === '[DONE]') {
+                    if (currentSession?.id) {
+                      get().updateSession(currentSessionId, {
+                        streaming: false
+                      })
+                      ChatControllerPool.remove(currentSessionId)
+                    }
                     return
                   }
+
                   const data = JSON.parse(msg.data)
                   const delta = data.choices[0]?.delta?.content
                   if (delta) {
-                    const current = get().getCurrentSession()
-                    const currentSessionIndex = get().getCurrentSessionIndex()
-                    if (current && current.id === currentSession.id) {
-                      const index =
-                        current.messages.at(-1)?.role === Role.ASSISTANT
-                          ? current.messages.length - 1
-                          : current.messages.length
-                      set(state => {
-                        state.sessions[currentSessionIndex].messages[index] = {
-                          role: Role.ASSISTANT,
-                          content:
-                            (get().getCurrentSession()?.messages[index]
-                              ?.content ?? '') + delta
-                        }
-                      })
-                    }
+                    const index =
+                      currentSession.messages.at(-1)?.role === Role.ASSISTANT
+                        ? currentSession.messages.length - 1
+                        : currentSession.messages.length
+                    set(state => {
+                      const session = state.getSessionById(currentSessionId)
+                      if (!session) return
+                      state.sessions[currentSessionIndex].messages[index] = {
+                        role: Role.ASSISTANT,
+                        content:
+                          (session.messages[index]?.content ?? '') + delta
+                      }
+                    })
                   }
                 } catch (error) {
+                  console.log(error)
+                  get().updateSession(currentSessionId, { streaming: false })
+                  ChatControllerPool.remove(currentSessionId)
                   message.error('Parse error')
                 }
               },
               onerror(err) {
+                console.log(err)
+                get().updateSession(currentSessionId, { streaming: false })
+                ChatControllerPool.remove(currentSessionId)
                 message.error(`something wrong ${err}`)
                 // no retry
                 throw err
