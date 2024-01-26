@@ -32,7 +32,7 @@ function IconChatGPTAvatar() {
 // #region Child component
 function Empty() {
   return (
-    <div className="h-full flex items-center justify-center">
+    <div className="h-full flex animate-name-[slide-in] animate-duration-500 animate-ease items-center justify-center">
       <div className="flex flex-col items-center">
         <div className="mb-3 h-72px w-72px flex items-center justify-center rd-50% bg-white 2xl:mb-8 2xl:h-82px 2xl:w-82px">
           <IconNewChat className="w-41px c-black 2xl:h-50px 2xl:w-50px" />
