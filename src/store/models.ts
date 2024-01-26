@@ -38,11 +38,15 @@ const useModelsStore = create<Models>()(
                   Authorization: `Bearer ${apiKey}`
                 }
               })
+              const data = await res.json()
               if (res.status === 200) {
-                const data = await res.json()
                 return Promise.resolve(data.data)
               } else {
-                message.error(`${res.status} ${res.statusText}`)
+                if (data?.error?.message) {
+                  message.error(data.error.message)
+                } else {
+                  message.error(`${res.status} ${res.statusText}`)
+                }
                 return Promise.reject(res)
               }
             } catch (error: any) {

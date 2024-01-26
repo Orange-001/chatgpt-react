@@ -206,8 +206,9 @@ function Expand(props: { setCollapse: (collapse: boolean) => void }) {
 }
 
 function LayoutHeader(props: { setCollapse: (collapse: boolean) => void }) {
-  const { settings } = useSettingsStore(state => ({
-    settings: state.settings
+  const { url, settings } = useSettingsStore(state => ({
+    settings: state.settings,
+    url: state.settings.url
   }))
   const { currentModel, setCurrentModel, getModels } = useModelsStore(
     state => ({
@@ -220,7 +221,7 @@ function LayoutHeader(props: { setCollapse: (collapse: boolean) => void }) {
 
   useEffect(() => {
     fetchModels()
-  }, [])
+  }, [url])
 
   async function fetchModels() {
     try {
