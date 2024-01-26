@@ -90,7 +90,7 @@ function Settings() {
           <Form
             ref={formRef}
             name="basic"
-            className="max-h-70vh overflow-y-auto px-8px"
+            className="max-h-50vh overflow-y-auto px-8px md:max-h-unset"
             labelCol={{ span: 24 }}
             wrapperCol={{ span: 24 }}
             autoComplete="off"
@@ -193,7 +193,19 @@ const SettingFormWrapper = styled.div`
   }
 `
 
-function LayoutHeader() {
+function Expand(props: { setCollapse: (collapse: boolean) => void }) {
+  function onClick() {
+    props.setCollapse(false)
+  }
+  return (
+    <i
+      className="i-solar:list-outline text-26px md:hidden"
+      onClick={onClick}
+    ></i>
+  )
+}
+
+function LayoutHeader(props: { setCollapse: (collapse: boolean) => void }) {
   const { settings } = useSettingsStore(state => ({
     settings: state.settings
   }))
@@ -232,20 +244,19 @@ function LayoutHeader() {
   }
 
   return (
-    <LayoutHeaderWrapper className="mb-1.5 box-border h-14 flex items-center justify-between p-2 font-semibold">
-      <div>
-        <Select
-          value={currentModel}
-          onChange={val => {
-            setCurrentModel(val)
-          }}
-          options={models}
-          variant="borderless"
-          size="large"
-          className="min-w-160px"
-          popupClassName="has-[.ant-select-item-empty]:min-w-unset min-w-200px"
-        />
-      </div>
+    <LayoutHeaderWrapper className="mb-1.5 box-border h-14 flex items-center justify-between b-b b-#4e4e4e b-solid p-2 font-semibold md:b-none">
+      <Expand setCollapse={props.setCollapse} />
+      <Select
+        value={currentModel}
+        onChange={val => {
+          setCurrentModel(val)
+        }}
+        options={models}
+        variant="borderless"
+        size="large"
+        className="min-w-160px"
+        popupClassName="has-[.ant-select-item-empty]:min-w-unset min-w-200px"
+      />
       <Settings />
     </LayoutHeaderWrapper>
   )

@@ -3,6 +3,7 @@ import classNames from 'classnames'
 import dayjs from 'dayjs'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
+import { useMobileScreen } from '@/hooks/useMobileScreen'
 import useChatStore, { Session } from '@/store/chat'
 import {
   isToday,
@@ -82,7 +83,7 @@ function EditSessionTopic(props: {
   )
 }
 
-function SessionList() {
+const SessionList = memo(() => {
   const { currentSessionId, sessions, setCurrentSessionId, delSessionById } =
     useChatStore(state => ({
       currentSessionId: state.currentSessionId,
@@ -217,11 +218,13 @@ function SessionList() {
       })}
     </div>
   )
-}
+})
 
 function ToggleCollapseBtn(props: { collapse: boolean; onClick: () => void }) {
   const { collapse, onClick } = props
+  const isMobileScreen = useMobileScreen()
   const [title, setTitle] = useState('Close siderbar')
+
   useEffect(() => {
     setTimeout(() => {
       setTitle(collapse ? 'Open siderbar' : 'Close siderbar')
@@ -232,7 +235,12 @@ function ToggleCollapseBtn(props: { collapse: boolean; onClick: () => void }) {
       className="group absolute right--30px top-50%"
       style={{ transform: 'translateY(-50%)' }}
     >
-      <Tooltip placement="right" title={title} mouseLeaveDelay={0}>
+      <Tooltip
+        placement="right"
+        title={title}
+        mouseLeaveDelay={0}
+        open={isMobileScreen ? false : undefined}
+      >
         <button className="cursor-pointer" onClick={onClick}>
           <div className="h-[72px] w-8 flex items-center justify-center">
             <div className="h-5.5 w-1 rounded-full bg-#ececf1 opacity-25 transition-colors transition-duration-1000 group-hover:opacity-75"></div>
@@ -243,33 +251,43 @@ function ToggleCollapseBtn(props: { collapse: boolean; onClick: () => void }) {
   )
 }
 
-function LayoutSider() {
-  const [collapse, setCollapse] = useState(false)
+function LayoutSider(props: {
+  collapse: boolean
+  setCollapse: (collapse: boolean) => void
+}) {
+  const { collapse, setCollapse } = props
   const handleToggleCollapse = useCallback(() => {
     setCollapse(!collapse)
-  }, [collapse])
+  }, [collapse, setCollapse])
 
-  const NewChatMemo = memo(NewChat)
-  const SessionListMemo = memo(SessionList)
-  const ToggleCollapseBtnMemo = memo(ToggleCollapseBtn)
+  const isMobileScreen = useMobileScreen()
+  useEffect(() => {
+    setCollapse(isMobileScreen)
+  }, [isMobileScreen, setCollapse])
+
   return (
-    <div
-      className={classNames(
-        'relative bg-black  box-border transition-all transition-duration-400',
-        collapse ? 'w-0' : 'w-260px'
-      )}
-    >
-      <div className="h-full overflow-hidden">
-        <nav className="box-border h-full overflow-auto px-3 pb-3.5">
-          <NewChatMemo />
-          <SessionListMemo />
-        </nav>
+    <>
+      <div
+        className={classNames(
+          'absolute h-full z-10 md:relative bg-black  box-border transition-all transition-duration-400',
+          collapse ? 'w-0' : 'w-260px'
+        )}
+      >
+        <div className="h-full overflow-hidden">
+          <nav className="box-border h-full overflow-auto px-3 pb-3.5">
+            <NewChat />
+            <SessionList />
+          </nav>
+        </div>
+        <ToggleCollapseBtn collapse={collapse} onClick={handleToggleCollapse} />
       </div>
-      <ToggleCollapseBtnMemo
-        collapse={collapse}
-        onClick={handleToggleCollapse}
-      />
-    </div>
+      {isMobileScreen && !collapse && (
+        <div
+          className="fixed bottom-0 left-0 right-0 top-0 z-1 bg-[rgba(0,0,0,0.5)]"
+          onClick={() => setCollapse(true)}
+        ></div>
+      )}
+    </>
   )
 }
 export default LayoutSider
