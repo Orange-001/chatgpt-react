@@ -1,10 +1,12 @@
 import { App, Input, Space } from 'antd'
+import { TextAreaRef } from 'antd/es/input/TextArea'
 import classNames from 'classnames'
 import copy from 'copy-to-clipboard'
 
 import IconNewChat from '@/assets/icon/new-chat.svg?react'
 import Markdown from '@/components/Markdown'
 import { ChatControllerPool } from '@/controller'
+import { useMobileScreen } from '@/hooks/useMobileScreen'
 import useChatStore, { Role } from '@/store/chat'
 import useModelsStore from '@/store/models'
 import useSettingsStore from '@/store/setttings'
@@ -57,15 +59,16 @@ function Copy(props: { content: string }) {
   )
 }
 
-function Edit() {
-  return (
-    <i className="i-ri:quill-pen-line invisible text-20px c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
-  )
-}
+// function Edit() {
+//   return (
+//     <i className="i-ri:quill-pen-line invisible text-20px c-#acacbe group-hover:visible active:scale-98 hover:c-white"></i>
+//   )
+// }
 // #endregion
 
 function Chat() {
   const { message } = App.useApp()
+  const isMobileScreen = useMobileScreen()
   const { currentModel } = useModelsStore(state => ({
     currentModel: state.currentModel
   }))
@@ -85,6 +88,23 @@ function Chat() {
   }))
   const currentSession = getCurrentSession()
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
+  function onScroll(e: React.UIEvent<HTMLDivElement, UIEvent>) {
+    const target = e.currentTarget
+    const isHitBottom =
+      target.scrollTop + target.clientHeight >=
+      target.scrollHeight - (isMobileScreen ? 4 : 10)
+    setShouldScrollToBottom(isHitBottom)
+  }
+  useEffect(() => {
+    const dom = scrollRef.current
+    if (dom && shouldScrollToBottom) {
+      dom.scrollTop = dom.scrollHeight
+    }
+  }, [currentSession, shouldScrollToBottom])
+
+  const inputRef = useRef<TextAreaRef>(null)
   const [input, setInput] = useState('')
 
   function onInput(val: string) {
@@ -101,6 +121,7 @@ function Chat() {
     if (input) {
       userSendMessage(input, currentModel, settings)
       setInput('')
+      // setAutoScroll(true)
     } else {
       message.warning('Please Input your message!')
     }
@@ -117,9 +138,13 @@ function Chat() {
   return (
     <div className="h-0 flex-1 px-16px">
       <div className="h-full flex flex-col">
-        <div className="flex-1 overflow-auto px-1.25rem">
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-auto px-1.25rem"
+          onScroll={onScroll}
+        >
           {!currentSession && <Empty />}
-          {currentSession?.messages.map((item, index) => {
+          {currentSession?.messages.map(item => {
             const isUser = item.role === Role.USER
             return (
               <div
@@ -152,6 +177,7 @@ function Chat() {
         <div className="">
           <div className="relative m-auto lg:max-w-[40rem] md:max-w-3xl xl:max-w-[48rem]">
             <Input.TextArea
+              ref={inputRef}
               placeholder="Message Assistant..."
               className="c-white b-#555561! bg-#343541! py-14px! placeholder:c-#94959b"
               value={input}
