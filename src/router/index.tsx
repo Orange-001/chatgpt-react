@@ -30,6 +30,8 @@ export const router: RouteObject[] = [
   }
 ]
 
-const browserRouter = createBrowserRouter(router)
+const browserRouter = createBrowserRouter(router, {
+  basename: import.meta.env.VITE_APP_BASE
+})
 
 export default browserRouter
