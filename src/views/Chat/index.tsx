@@ -193,7 +193,7 @@ function Chat() {
               onInput={e => onInput(e.currentTarget.value)}
               onKeyDown={onKeyDown}
               autoSize={{ minRows: 1, maxRows: 8 }}
-              autoFocus={true}
+              autoFocus={!isMobileScreen}
               size="large"
             />
             <button
