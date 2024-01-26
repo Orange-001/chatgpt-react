@@ -7,7 +7,9 @@ import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 
+import { DEFAULT_TOPIC, SUMMARIZE_MIN_LEN } from '@/const'
 import { ChatControllerPool } from '@/controller'
+import { countMessagesToken } from '@/utils/token'
 
 import { Settings } from './setttings'
 
@@ -35,7 +37,7 @@ interface Chat {
   currentSessionId: string
   sessions: Session[]
   setCurrentSessionId: (id: string) => void
-  summarizeSession: (messages: Message[]) => void
+  summarizeSession: (id: string, settings: Settings) => void
   updateSession: (id: string, session: Partial<Session>) => void
   getSessionById: (id: string) => Session | undefined
   userSendMessage: (
@@ -104,7 +106,7 @@ const useChatStore = create<Chat>()(
                 state.sessions.unshift({
                   id: nanoid(),
                   createTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                  topic: 'New Chat',
+                  topic: DEFAULT_TOPIC,
                   messages: [
                     {
                       id: nanoid(),
@@ -163,6 +165,7 @@ const useChatStore = create<Chat>()(
                         streaming: false
                       })
                       ChatControllerPool.remove(currentSessionId)
+                      get().summarizeSession(currentSessionId, settings)
                     }
                     return
                   }
@@ -232,37 +235,55 @@ const useChatStore = create<Chat>()(
             })
           },
 
-          async summarizeSession(messages) {
-            // const session =
-            // const messages = session.message
-            const { VITE_OPENAI_URL, VITE_OPENAI_KEY } = import.meta.env
-            const fetchUrl = `${VITE_OPENAI_URL}/v1/chat/completions`
+          async summarizeSession(id, settings) {
+            const session = this.getSessionById(id)
 
-            const res = await fetch(fetchUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-requested-with': 'XMLHttpRequest',
-                Authorization: `Bearer ${VITE_OPENAI_KEY}`
-              },
-              body: JSON.stringify({
-                model: 'gpt-3.5-turbo',
-                messages: [
-                  ...messages,
-                  {
-                    role: 'user',
-                    content:
-                      'Please generate a four to five word title summarizing our conversation without any lead-in, punctuation, quotation marks, periods, symbols, or additional text. Remove enclosing quotation marks.'
-                  }
-                ]
-              })
-            })
-            if (res.status === 200) {
-              const data = res.json()
-              console.log(res)
-              console.log(data)
-            } else {
-              console.log(res)
+            if (
+              session &&
+              session.topic === DEFAULT_TOPIC &&
+              countMessagesToken(session.messages) >= SUMMARIZE_MIN_LEN
+            ) {
+              const { url, apiKey } = settings
+              const fetchUrl = `${url}/v1/chat/completions`
+              const messages = session.messages
+                .map(item => ({
+                  role: item.role,
+                  content: item.content
+                }))
+                .concat({
+                  role: Role.USER,
+                  content:
+                    'Please generate a four to five word title summarizing our conversation without any lead-in, punctuation, quotation marks, periods, symbols, or additional text. Remove enclosing quotation marks.'
+                })
+
+              try {
+                const res = await fetch(fetchUrl, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-requested-with': 'XMLHttpRequest',
+                    Authorization: `Bearer ${apiKey}`
+                  },
+                  body: JSON.stringify({
+                    model: 'gpt-3.5-turbo',
+                    messages
+                  })
+                })
+                if (res.status === 200) {
+                  const data = await res.json()
+                  const topic = data.choices[0].message.content
+                  get().updateSession(id, { topic })
+                } else {
+                  message.error(`${res.status} ${res.statusText}`)
+                  console.log(res)
+                }
+              } catch (error: any) {
+                if (error.message) {
+                  message.error(error.message)
+                } else {
+                  message.error('Something wrong')
+                }
+              }
             }
           }
         }
