@@ -111,6 +111,12 @@ function Chat() {
   const inputRef = useRef<TextAreaRef>(null)
   const [input, setInput] = useState('')
 
+  useEffect(() => {
+    if (!isMobileScreen) {
+      inputRef.current?.focus()
+    }
+  }, [currentSessionId])
+
   function onInput(val: string) {
     setInput(val)
   }
@@ -125,7 +131,6 @@ function Chat() {
     if (input) {
       userSendMessage(input, currentModel, settings)
       setInput('')
-      // setAutoScroll(true)
     } else {
       message.warning('Please Input your message!')
     }

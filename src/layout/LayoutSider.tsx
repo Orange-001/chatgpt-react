@@ -17,7 +17,8 @@ interface SessionGroup {
   sessions: Session[]
 }
 
-function NewChat() {
+const NewChat = memo((props: { setCollapse: (collapse: boolean) => void }) => {
+  const isMobileScreen = useMobileScreen()
   const NewChatBtnRef = useRef<HTMLDivElement>(null)
   const { setCurrentSessionId } = useChatStore(state => ({
     setCurrentSessionId: state.setCurrentSessionId
@@ -25,6 +26,9 @@ function NewChat() {
 
   function handleNewChat() {
     setCurrentSessionId('')
+    if (isMobileScreen) {
+      props.setCollapse(true)
+    }
   }
 
   return (
@@ -43,7 +47,7 @@ function NewChat() {
       </div>
     </div>
   )
-}
+})
 
 function EditSessionTopic(props: {
   id: string
@@ -83,142 +87,148 @@ function EditSessionTopic(props: {
   )
 }
 
-const SessionList = memo(() => {
-  const { currentSessionId, sessions, setCurrentSessionId, delSessionById } =
-    useChatStore(state => ({
-      currentSessionId: state.currentSessionId,
-      sessions: state.sessions,
-      setCurrentSessionId: state.setCurrentSessionId,
-      delSessionById: state.delSessionById
-    }))
-  const [sessionGroups, setSessionGroups] = useState<SessionGroup[]>([])
-  const [showInput, setShowInput] = useState(false)
-  const [targetId, setTargetId] = useState('')
+const SessionList = memo(
+  (props: { setCollapse: (collapse: boolean) => void }) => {
+    const { currentSessionId, sessions, setCurrentSessionId, delSessionById } =
+      useChatStore(state => ({
+        currentSessionId: state.currentSessionId,
+        sessions: state.sessions,
+        setCurrentSessionId: state.setCurrentSessionId,
+        delSessionById: state.delSessionById
+      }))
+    const [sessionGroups, setSessionGroups] = useState<SessionGroup[]>([])
+    const [showInput, setShowInput] = useState(false)
+    const [targetId, setTargetId] = useState('')
+    const isMobileScreen = useMobileScreen()
 
-  useEffect(() => {
-    const temp: SessionGroup[] = [
-      { title: 'Today', sessions: [] },
-      { title: 'Yesterday', sessions: [] },
-      { title: 'Previous 7 Days', sessions: [] },
-      { title: 'Previous 30 Days', sessions: [] }
-    ]
-    sessions.forEach(v => {
-      const targetDate = dayjs(v.createTime)
+    useEffect(() => {
+      const temp: SessionGroup[] = [
+        { title: 'Today', sessions: [] },
+        { title: 'Yesterday', sessions: [] },
+        { title: 'Previous 7 Days', sessions: [] },
+        { title: 'Previous 30 Days', sessions: [] }
+      ]
+      sessions.forEach(v => {
+        const targetDate = dayjs(v.createTime)
 
-      if (isToday(targetDate)) {
-        temp[0].sessions.push(v)
-      } else if (isYesterday(targetDate)) {
-        temp[1].sessions.push(v)
-      } else if (isWithin7Days(targetDate)) {
-        temp[2].sessions.push(v)
-      } else if (isWithin30Days(targetDate)) {
-        temp[3].sessions.push(v)
+        if (isToday(targetDate)) {
+          temp[0].sessions.push(v)
+        } else if (isYesterday(targetDate)) {
+          temp[1].sessions.push(v)
+        } else if (isWithin7Days(targetDate)) {
+          temp[2].sessions.push(v)
+        } else if (isWithin30Days(targetDate)) {
+          temp[3].sessions.push(v)
+        }
+      })
+      setSessionGroups(temp)
+    }, [sessions])
+
+    function handleSelectSession(id: string) {
+      setCurrentSessionId(id)
+      if (isMobileScreen) {
+        props.setCollapse(true)
       }
-    })
-    setSessionGroups(temp)
-  }, [sessions])
+    }
 
-  function handleSelectSession(id: string) {
-    setCurrentSessionId(id)
-  }
+    function handleDel(id: string) {
+      delSessionById(id)
+    }
 
-  function handleDel(id: string) {
-    delSessionById(id)
-  }
+    function openEdit(id: string) {
+      setShowInput(true)
+      setTargetId(id)
+    }
 
-  function openEdit(id: string) {
-    setShowInput(true)
-    setTargetId(id)
-  }
-
-  return (
-    <div>
-      {sessionGroups.map((item, index) => {
-        return (
-          !!item.sessions.length && (
-            <div key={index} className="mt-5">
-              <h3 className="h-9 bg-black px-2 pb-2 pt-3 text-xs c-[rgba(102,102,102)] font-medium">
-                {item.title}
-              </h3>
-              <ol>
-                {item.sessions.map(cItem => {
-                  const isActive = cItem.id === currentSessionId
-                  const isTarget = cItem.id === targetId
-                  return (
-                    <li
-                      key={cItem.id}
-                      className={classNames(
-                        'group relative cursor-pointer rounded-lg p-2 text-sm hover:bg-#202123 active:opacity-90',
-                        isActive ? 'bg-#343541!' : ''
-                      )}
-                      onClick={() => handleSelectSession(cItem.id)}
-                      onDoubleClick={() => openEdit(cItem.id)}
-                    >
-                      {showInput && isTarget ? (
-                        <EditSessionTopic
-                          id={cItem.id}
-                          value={cItem.topic}
-                          isActive={isActive}
-                          setShowInput={setShowInput}
-                        />
-                      ) : (
-                        <>
-                          <div className="overflow-hidden whitespace-nowrap">
-                            {cItem.topic}
-                          </div>
-                          <div
-                            className={classNames(
-                              'w-20 absolute bottom-0 right-0 top-0 hidden justify-end items-center gap-1.5 pr-2 group-hover:flex rounded-lg',
-                              isActive ? 'flex' : ''
-                            )}
-                            style={{
-                              backgroundImage: isActive
-                                ? 'linear-gradient(to left, #343541 60%, rgba(255, 255, 255, 0))'
-                                : 'linear-gradient(to left, #202123 60%, rgba(0, 0, 0, 0))'
-                            }}
-                          >
-                            <Tooltip
-                              placement="top"
-                              title="rename"
-                              color="#333333"
+    return (
+      <div>
+        {sessionGroups.map((item, index) => {
+          return (
+            !!item.sessions.length && (
+              <div key={index} className="mt-5">
+                <h3 className="h-9 bg-black px-2 pb-2 pt-3 text-xs c-[rgba(102,102,102)] font-medium">
+                  {item.title}
+                </h3>
+                <ol>
+                  {item.sessions.map(cItem => {
+                    const isActive = cItem.id === currentSessionId
+                    const isTarget = cItem.id === targetId
+                    return (
+                      <li
+                        key={cItem.id}
+                        className={classNames(
+                          'group relative cursor-pointer rounded-lg p-2 text-sm hover:bg-#202123 active:opacity-90 animate-name-[slide-in] animate-duration-500 animate-ease',
+                          isActive ? 'bg-#343541!' : ''
+                        )}
+                        onClick={() => handleSelectSession(cItem.id)}
+                        onDoubleClick={() => openEdit(cItem.id)}
+                      >
+                        {showInput && isTarget ? (
+                          <EditSessionTopic
+                            id={cItem.id}
+                            value={cItem.topic}
+                            isActive={isActive}
+                            setShowInput={setShowInput}
+                          />
+                        ) : (
+                          <>
+                            <div className="overflow-hidden whitespace-nowrap">
+                              {cItem.topic}
+                            </div>
+                            <div
+                              className={classNames(
+                                'w-20 absolute bottom-0 right-0 top-0 hidden justify-end items-center gap-1.5 pr-2 group-hover:flex rounded-lg',
+                                isActive ? 'flex' : ''
+                              )}
+                              style={{
+                                backgroundImage: isActive
+                                  ? 'linear-gradient(to left, #343541 60%, rgba(255, 255, 255, 0))'
+                                  : 'linear-gradient(to left, #202123 60%, rgba(0, 0, 0, 0))'
+                              }}
                             >
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  openEdit(cItem.id)
-                                }}
+                              <Tooltip
+                                placement="top"
+                                title="rename"
+                                color="#333333"
                               >
-                                <i className="i-ph:pencil-simple-fill text-18px c-white hover:opacity-70"></i>
-                              </button>
-                            </Tooltip>
-                            <Tooltip
-                              placement="top"
-                              title="delete"
-                              color="#333333"
-                            >
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  handleDel(cItem.id)
-                                }}
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    openEdit(cItem.id)
+                                  }}
+                                >
+                                  <i className="i-ph:pencil-simple-fill text-18px c-white hover:opacity-70"></i>
+                                </button>
+                              </Tooltip>
+                              <Tooltip
+                                placement="top"
+                                title="delete"
+                                color="#333333"
                               >
-                                <i className="i-material-symbols:delete text-18px c-white hover:opacity-70"></i>
-                              </button>
-                            </Tooltip>
-                          </div>
-                        </>
-                      )}
-                    </li>
-                  )
-                })}
-              </ol>
-            </div>
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    handleDel(cItem.id)
+                                  }}
+                                >
+                                  <i className="i-material-symbols:delete text-18px c-white hover:opacity-70"></i>
+                                </button>
+                              </Tooltip>
+                            </div>
+                          </>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ol>
+              </div>
+            )
           )
-        )
-      })}
-    </div>
-  )
-})
+        })}
+      </div>
+    )
+  }
+)
 
 function ToggleCollapseBtn(props: { collapse: boolean; onClick: () => void }) {
   const { collapse, onClick } = props
@@ -275,8 +285,8 @@ function LayoutSider(props: {
       >
         <div className="h-full overflow-hidden">
           <nav className="box-border h-full overflow-auto px-3 pb-3.5">
-            <NewChat />
-            <SessionList />
+            <NewChat setCollapse={setCollapse} />
+            <SessionList setCollapse={setCollapse} />
           </nav>
         </div>
         <ToggleCollapseBtn collapse={collapse} onClick={handleToggleCollapse} />
