@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => {
   const isVisualizer = mode === 'visualizer'
 
   return {
+    base: '/chatgpt-react/',
     plugins: [
       react(),
       UnoCSS(),
